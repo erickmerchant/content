@@ -43,17 +43,17 @@ app.command('generate')
 .option('watch', 'watch for changes')
 .alias('w', 'watch')
 .action(function (args) {
-  const contentDir = path.join(process.cwd(), args.has('content') ? args.get('content') : 'content')
-
-  const required = require(path.join(process.cwd(), args.has('require') ? args.get('require') : 'html.js'))
+  assert.ok(args.has('destination'), 'destination is required')
 
   const guarded = new Map()
 
-  assert.ok(args.has('destination'), 'destination is required')
+  const required = require(path.join(process.cwd(), args.has('require') ? args.get('require') : 'html.js'))
 
   assert.equal(typeof required, 'function', 'the required module should be a function')
 
   required({define, template})
+
+  const contentDir = path.join(process.cwd(), args.has('content') ? args.get('content') : 'content')
 
   return glob(contentDir + '/**/*.md').then(function (files) {
     return Promise.all(files.map((file) => {
@@ -166,9 +166,13 @@ app.command('create')
 .option('require', 'a module to define your html (default ./html.js)')
 .option('content', 'content directory (default ./content/)')
 .action(function (args) {
-  const contentDir = path.join(process.cwd(), args.has('content') ? args.get('content') : 'content')
-
   const required = require(path.join(process.cwd(), args.has('require') ? args.get('require') : 'html.js'))
+
+  assert.equal(typeof required, 'function', 'the required module should be a function')
+
+  required({define, template})
+
+  const contentDir = path.join(process.cwd(), args.has('content') ? args.get('content') : 'content')
 
   assert.ok(args.has('definition'), 'definition is required')
 
