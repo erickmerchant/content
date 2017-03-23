@@ -1,4 +1,4 @@
-const app = require('sergeant')()
+const command = require('sergeant')
 const assert = require('assert')
 const chalk = require('chalk')
 const path = require('path')
@@ -11,7 +11,7 @@ const cson = require('cson-parser')
 const Highlights = require('highlights')
 const Remarkable = require('remarkable')
 const pathMatch = require('path-match')()
-const pathCompile = require('path-to-regexp').compile
+// const pathCompile = require('path-to-regexp').compile
 const mkdirp = thenify(require('mkdirp'))
 const readFile = thenify(fs.readFile)
 const writeFile = thenify(fs.writeFile)
@@ -34,162 +34,149 @@ const remarkable = new Remarkable({
 const definitions = new Map()
 const templates = []
 
-app.command('generate')
-.describe('Generate html from markdown content and js')
-.parameter('destination', 'where to save to')
-.option('require', 'a module to define your html (default ./html.js)')
-.option('content', 'content directory (default ./content/)')
-.option('no-min', 'do not minify')
-.option('watch', 'watch for changes')
-.alias('w', 'watch')
-.action(function (args) {
-  assert.ok(args.has('destination'), 'destination is required')
-
-  const guarded = new Map()
-
-  const required = require(path.join(process.cwd(), args.has('require') ? args.get('require') : 'html.js'))
-
-  assert.equal(typeof required, 'function', 'the required module should be a function')
-
-  required({define, template})
-
-  const contentDir = path.join(process.cwd(), args.has('content') ? args.get('content') : 'content')
-
-  return glob(contentDir + '/**/*.md').then(function (files) {
-    return Promise.all(files.map((file) => {
-      let location = path.relative(contentDir, file).split('.').slice(0, -1).join('.')
-
-      let object = {}
-
-      ;[...definitions].forEach(function ([collection, definition]) {
-        let result = pathMatch(definition.route)(location)
-
-        if (result) {
-          object = result
-
-          object.collection = collection
-        }
-      })
-
-      return readFile(file, 'utf-8').then(function (blocks) {
-        blocks = blocks.split('---').map((block) => block.trim())
-
-        if (blocks[0] === '') {
-          blocks = blocks.slice(1)
-
-          Object.assign(object, cson.parse(blocks.shift()))
-        }
-
-        Object.assign(object, {content: remarkable.render(blocks.join('---'))})
-
-        return object
-      })
-    }))
-  })
-  .then(function (objects) {
-    templates.forEach(function (template) {
-      template({objects, html, save})
-    })
+command('generate', function ({parameter, option}) {
+  parameter('destination', {
+    description: 'where to save to',
+    required: true
   })
 
-  function html (strings, ...vals) {
-    if (!Array.isArray(strings)) {
-      let symbol = Symbol()
+  option('require', {
+    description: 'a module to define your html',
+    default: 'html.js'
+  })
 
-      guarded.set(symbol, strings)
+  option('content', {
+    description: 'content directory',
+    default: 'content'
+  })
 
-      return symbol
-    }
+  option('no-min', {
+    description: 'do not minify',
+    type: Boolean
+  })
 
-    let result = ''
+  option('watch', {
+    description: 'watch for changes',
+    type: Boolean,
+    aliases: ['w']
+  })
 
-    strings.forEach(function (str, key) {
-      result += str
+  return function (args) {
+    const guarded = new Map()
 
-      if (vals[key]) {
-        let val = vals[key]
+    const required = require(path.join(process.cwd(), args.require))
 
-        if (guarded.has(val)) {
-          val = guarded.get(val)
-        } else {
-          val = escape(val)
+    assert.equal(typeof required, 'function', 'the required module should be a function')
+
+    required({define, template})
+
+    const contentDir = path.join(process.cwd(), args.content)
+
+    return glob(contentDir + '/**/*.md').then(function (files) {
+      return Promise.all(files.map((file) => {
+        let location = path.relative(contentDir, file).split('.').slice(0, -1).join('.')
+
+        let object = {}
+
+        ;[...definitions].forEach(function ([collection, definition]) {
+          let result = pathMatch(definition.route)(location)
+
+          if (result) {
+            object = result
+
+            object.collection = collection
+          }
+        })
+
+        return readFile(file, 'utf-8').then(function (blocks) {
+          blocks = blocks.split('---').map((block) => block.trim())
+
+          if (blocks[0] === '') {
+            blocks = blocks.slice(1)
+
+            Object.assign(object, cson.parse(blocks.shift()))
+          }
+
+          Object.assign(object, {content: remarkable.render(blocks.join('---'))})
+
+          return object
+        })
+      }))
+    })
+    .then(function (objects) {
+      templates.forEach(function (template) {
+        template({objects, html, save})
+      })
+    })
+
+    function html (strings, ...vals) {
+      if (!Array.isArray(strings)) {
+        let symbol = Symbol()
+
+        guarded.set(symbol, strings)
+
+        return symbol
+      }
+
+      let result = ''
+
+      strings.forEach(function (str, key) {
+        result += str
+
+        if (vals[key]) {
+          let val = vals[key]
+
+          if (guarded.has(val)) {
+            val = guarded.get(val)
+          } else {
+            val = escape(val)
+          }
+
+          result += val
         }
+      })
 
-        result += val
-      }
-    })
-
-    return result.trim()
-  }
-
-  function save (file, content) {
-    assert.equal(typeof file, 'string', 'file to save should be a string')
-
-    assert.equal(typeof content, 'string', 'content to save should be a string')
-
-    if (file.endsWith('/')) {
-      file = file + '/index.html'
-    } else {
-      file = file + '.html'
+      return result.trim()
     }
 
-    let fullFile = path.join(process.cwd(), args.get('destination'), file)
+    function save (file, content) {
+      assert.equal(typeof file, 'string', 'file to save should be a string')
 
-    if (!args.get('no-min')) {
-      content = minify(content, {
-        collapseWhitespace: true,
-        removeComments: true,
-        collapseBooleanAttributes: true,
-        removeAttributeQuotes: true,
-        // removeRedundantAttributes: true,
-        removeEmptyAttributes: true,
-        removeOptionalTags: true
+      assert.equal(typeof content, 'string', 'content to save should be a string')
+
+      if (file.endsWith('/')) {
+        file = file + '/index.html'
+      } else {
+        file = file + '.html'
+      }
+
+      let fullFile = path.join(process.cwd(), args.destination, file)
+
+      if (!args.noMin) {
+        content = minify(content, {
+          collapseWhitespace: true,
+          removeComments: true,
+          collapseBooleanAttributes: true,
+          removeAttributeQuotes: true,
+          // removeRedundantAttributes: true,
+          removeEmptyAttributes: true,
+          removeOptionalTags: true
+        })
+      }
+
+      mkdirp(path.parse(fullFile).dir).then(function () {
+        return writeFile(fullFile, content).then(function () {
+          console.log(chalk.green(file + ' saved'))
+        })
+      })
+      .catch(function (err) {
+        if (err) {
+          throw err
+        }
       })
     }
-
-    mkdirp(path.parse(fullFile).dir).then(function () {
-      return writeFile(fullFile, content).then(function () {
-        console.log(chalk.green(file + ' saved'))
-      })
-    })
-    .catch(function (err) {
-      if (err) {
-        throw err
-      }
-    })
   }
-})
-
-app.command('create')
-.describe('Create new markdown content')
-.parameter('definition', 'what definition to use')
-.option('require', 'a module to define your html (default ./html.js)')
-.option('content', 'content directory (default ./content/)')
-.action(function (args) {
-  const required = require(path.join(process.cwd(), args.has('require') ? args.get('require') : 'html.js'))
-
-  assert.equal(typeof required, 'function', 'the required module should be a function')
-
-  required({define, template})
-
-  const contentDir = path.join(process.cwd(), args.has('content') ? args.get('content') : 'content')
-
-  assert.ok(args.has('definition'), 'definition is required')
-
-  assert.ok(definitions.has(args.get('definition')), 'definition not found')
-
-  const definition = definitions.get(args.get('definition'))
-
-  assert.ok(definition.create, 'definition has no create function')
-
-  const object = definition.create(args) || {}
-
-
-})
-
-app.run().catch(function (err) {
-  console.error(err)
-})
+})(process.argv.slice(2))
 
 function define (collection, definition) {
   assert.ok(definition.route, 'definitions require a route')
