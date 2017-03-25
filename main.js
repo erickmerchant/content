@@ -34,15 +34,10 @@ const remarkable = new Remarkable({
 const definitions = new Map()
 const templates = []
 
-command('generate', function ({parameter, option}) {
+command('html', function ({parameter, option}) {
   parameter('destination', {
     description: 'where to save to',
     required: true
-  })
-
-  option('require', {
-    description: 'a module to define your html',
-    default: 'html.js'
   })
 
   option('content', {
@@ -64,7 +59,7 @@ command('generate', function ({parameter, option}) {
   return function (args) {
     const guarded = new Map()
 
-    const required = require(path.join(process.cwd(), args.require))
+    const required = require(path.join(process.cwd(), 'html.js'))
 
     assert.equal(typeof required, 'function', 'the required module should be a function')
 
@@ -105,19 +100,11 @@ command('generate', function ({parameter, option}) {
     })
     .then(function (objects) {
       templates.forEach(function (template) {
-        template({objects, html, save})
+        template({objects, html, safe, save})
       })
     })
 
     function html (strings, ...vals) {
-      if (!Array.isArray(strings)) {
-        let symbol = Symbol()
-
-        guarded.set(symbol, strings)
-
-        return symbol
-      }
-
       let result = ''
 
       strings.forEach(function (str, key) {
@@ -132,11 +119,23 @@ command('generate', function ({parameter, option}) {
             val = escape(val)
           }
 
+          if (Array.isArray(val)) {
+            val = val.join('')
+          }
+
           result += val
         }
       })
 
       return result.trim()
+    }
+
+    function safe (val) {
+      let symbol = Symbol()
+
+      guarded.set(symbol, val)
+
+      return symbol
     }
 
     function save (file, content) {
@@ -145,7 +144,7 @@ command('generate', function ({parameter, option}) {
       assert.equal(typeof content, 'string', 'content to save should be a string')
 
       if (file.endsWith('/')) {
-        file = file + '/index.html'
+        file = file + 'index.html'
       } else {
         file = file + '.html'
       }
@@ -158,7 +157,7 @@ command('generate', function ({parameter, option}) {
           removeComments: true,
           collapseBooleanAttributes: true,
           removeAttributeQuotes: true,
-          // removeRedundantAttributes: true,
+          removeRedundantAttributes: true,
           removeEmptyAttributes: true,
           removeOptionalTags: true
         })
