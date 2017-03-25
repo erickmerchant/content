@@ -11,7 +11,7 @@ const cson = require('cson-parser')
 const Highlights = require('highlights')
 const Remarkable = require('remarkable')
 const pathMatch = require('path-match')()
-// const pathCompile = require('path-to-regexp').compile
+const pathCompile = require('path-to-regexp').compile
 const mkdirp = thenify(require('mkdirp'))
 const readFile = thenify(fs.readFile)
 const writeFile = thenify(fs.writeFile)
@@ -33,16 +33,38 @@ const remarkable = new Remarkable({
 })
 const definitions = new Map()
 const templates = []
+const required = require(path.join(process.cwd(), 'html.js'))
 
-command('html', function ({parameter, option}) {
+assert.equal(typeof required, 'function', 'the required module should be a function')
+
+required({define, template})
+
+command('html', 'generate html from markdown and js', function ({parameter, option, command}) {
+  command('create-content', 'create new markdown', function ({parameter, option, command}) {
+    ;[...definitions].forEach(function ([collection, definition]) {
+      command(collection, (definers) => {
+        const write = definition.define(definers)
+
+        return (args) => {
+          const object = write(args)
+          const compiler = pathCompile(definition.route)
+          const file = compiler(object) + '.md'
+          const fullFile = path.join(process.cwd(), 'content', file)
+          const content = '---\n' + cson.stringify(object, null, 2) + '\n---\n'
+
+          mkdirp(path.parse(fullFile).dir).then(function () {
+            return writeFile(fullFile, content).then(function () {
+              console.log(chalk.green(file + ' saved'))
+            })
+          })
+        }
+      })
+    })
+  })
+
   parameter('destination', {
     description: 'where to save to',
     required: true
-  })
-
-  option('content', {
-    description: 'content directory',
-    default: 'content'
   })
 
   option('no-min', {
@@ -59,13 +81,7 @@ command('html', function ({parameter, option}) {
   return function (args) {
     const guarded = new Map()
 
-    const required = require(path.join(process.cwd(), 'html.js'))
-
-    assert.equal(typeof required, 'function', 'the required module should be a function')
-
-    required({define, template})
-
-    const contentDir = path.join(process.cwd(), args.content)
+    const contentDir = path.join(process.cwd(), 'content')
 
     return glob(contentDir + '/**/*.md').then(function (files) {
       return Promise.all(files.map((file) => {
@@ -77,9 +93,9 @@ command('html', function ({parameter, option}) {
           let result = pathMatch(definition.route)(location)
 
           if (result) {
-            object = result
+            result.collection = collection
 
-            object.collection = collection
+            object = definition.read(result)
           }
         })
 
@@ -178,7 +194,9 @@ command('html', function ({parameter, option}) {
 })(process.argv.slice(2))
 
 function define (collection, definition) {
-  assert.ok(definition.route, 'definitions require a route')
+  assert.ok(definition.route, 'definitions require a route setting')
+  assert.ok(definition.define, 'definitions require a define setting')
+  assert.ok(definition.read, 'definitions require a read setting')
 
   definitions.set(collection, definition)
 }
