@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const command = require('sergeant')
 const assert = require('assert')
 const chalk = require('chalk')
