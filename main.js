@@ -1,6 +1,7 @@
 const command = require('sergeant')
 const assert = require('assert')
 const chalk = require('chalk')
+const chokidar = require('chokidar')
 const path = require('path')
 const thenify = require('thenify')
 const minify = require('html-minifier').minify
@@ -33,11 +34,9 @@ const remarkable = new Remarkable({
 })
 const definitions = new Map()
 const templates = []
-const required = require(path.join(process.cwd(), 'html.js'))
+const configFile = path.join(process.cwd(), 'html.js')
 
-assert.equal(typeof required, 'function', 'the required module should be a function')
-
-required({define, template})
+loadConfig()
 
 command('html', 'generate html from markdown and js', function ({parameter, option, command}) {
   command('create-content', 'create new markdown', function ({parameter, option, command}) {
@@ -48,12 +47,24 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
         return (args) => {
           const object = write(args)
           const compiler = pathCompile(definition.route)
-          const file = compiler(object) + '.md'
+          const location = compiler(object)
+          const file = location + '.md'
+          const locationObject = pathMatch(definition.route)(location)
+
+          Object.keys(locationObject).forEach(function (key) {
+            delete object[key]
+          })
+
           const fullFile = path.join(process.cwd(), 'content', file)
-          const content = '---\n' + cson.stringify(object, null, 2) + '\n---\n'
+
+          let content = object.content || ''
+
+          delete object.content
+
+          const body = '---\n' + cson.stringify(object, null, 2) + '\n---\n' + content + '\n'
 
           mkdirp(path.parse(fullFile).dir).then(function () {
-            return writeFile(fullFile, content).then(function () {
+            return writeFile(fullFile, body).then(function () {
               console.log(chalk.green(file + ' saved'))
             })
           })
@@ -83,42 +94,54 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
 
     const contentDir = path.join(process.cwd(), 'content')
 
-    return glob(contentDir + '/**/*.md').then(function (files) {
-      return Promise.all(files.map((file) => {
-        let location = path.relative(contentDir, file).split('.').slice(0, -1).join('.')
+    run()
 
-        let object = {}
+    if (args.watch) {
+      chokidar.watch([contentDir + '/**/*.md', configFile], {ignoreInitial: true}).on('all', function () {
+        loadConfig()
 
-        ;[...definitions].forEach(function ([collection, definition]) {
-          let result = pathMatch(definition.route)(location)
-
-          if (result) {
-            result.collection = collection
-
-            object = definition.read(result)
-          }
-        })
-
-        return readFile(file, 'utf-8').then(function (blocks) {
-          blocks = blocks.split('---').map((block) => block.trim())
-
-          if (blocks[0] === '') {
-            blocks = blocks.slice(1)
-
-            Object.assign(object, cson.parse(blocks.shift()))
-          }
-
-          Object.assign(object, {content: remarkable.render(blocks.join('---'))})
-
-          return object
-        })
-      }))
-    })
-    .then(function (objects) {
-      templates.forEach(function (template) {
-        template({objects, html, safe, save})
+        run()
       })
-    })
+    }
+
+    function run () {
+      glob(contentDir + '/**/*.md').then(function (files) {
+        return Promise.all(files.map((file) => {
+          let location = path.relative(contentDir, file).split('.').slice(0, -1).join('.')
+
+          let object = {}
+
+          ;[...definitions].forEach(function ([collection, definition]) {
+            let result = pathMatch(definition.route)(location)
+
+            if (result) {
+              result.collection = collection
+
+              object = definition.read(result)
+            }
+          })
+
+          return readFile(file, 'utf-8').then(function (blocks) {
+            blocks = blocks.split('---').map((block) => block.trim())
+
+            if (blocks[0] === '') {
+              blocks = blocks.slice(1)
+
+              Object.assign(object, cson.parse(blocks.shift()))
+            }
+
+            Object.assign(object, {content: remarkable.render(blocks.join('---'))})
+
+            return object
+          })
+        }))
+      })
+      .then(function (objects) {
+        templates.forEach(function (template) {
+          template({objects, html, safe, save})
+        })
+      })
+    }
 
     function html (strings, ...vals) {
       let result = ''
@@ -192,6 +215,16 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
     }
   }
 })(process.argv.slice(2))
+
+function loadConfig () {
+  delete require.cache[configFile]
+
+  const required = require(configFile)
+
+  assert.equal(typeof required, 'function', 'the required module should be a function')
+
+  required({define, template})
+}
 
 function define (collection, definition) {
   assert.ok(definition.route, 'definitions require a route setting')
