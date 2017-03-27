@@ -6,7 +6,7 @@
     "html": "./main.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "standard"
   },
   "repository": {
     "type": "git",
@@ -32,5 +32,8 @@
     "remarkable": "^1.7.1",
     "sergeant": "^15.1.0",
     "thenify": "^3.2.1"
+  },
+  "devDependencies": {
+    "standard": "^9.0.2"
   }
 }
