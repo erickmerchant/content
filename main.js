@@ -171,7 +171,7 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
     }
 
     function safe (val) {
-      let symbol = Symbol()
+      let symbol = Symbol('safe')
 
       guarded.set(symbol, val)
 
