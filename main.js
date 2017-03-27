@@ -40,9 +40,9 @@ const configFile = path.join(process.cwd(), 'html.js')
 loadConfig()
 
 command('html', 'generate html from markdown and js', function ({parameter, option, command}) {
-  command('create-content', 'create new markdown', function ({parameter, option, command}) {
-    ;[...definitions].forEach(function ([collection, definition]) {
-      command(collection, (definers) => {
+  ;[...definitions].forEach(function ([collection, definition]) {
+    if (definition.singular != null) {
+      command('new:' + definition.singular, 'make a new ' + definition.singular, (definers) => {
         const write = definition.define(definers)
 
         return (args) => {
@@ -71,7 +71,7 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
           })
         }
       })
-    })
+    }
   })
 
   parameter('destination', {
