@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const command = require('sergeant')
+const error = require('sergeant/error')
 const assert = require('assert')
 const chalk = require('chalk')
 const chokidar = require('chokidar')
@@ -218,13 +219,19 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
 })(process.argv.slice(2))
 
 function loadConfig () {
-  delete require.cache[configFile]
+  try {
+    delete require.cache[configFile]
 
-  const required = require(configFile)
+    const required = require(configFile)
 
-  assert.equal(typeof required, 'function', 'the required module should be a function')
+    assert.equal(typeof required, 'function', 'the required module should be a function')
 
-  required({define, template})
+    required({define, template})
+  } catch (e) {
+    error(e)
+
+    process.exit(1)
+  }
 }
 
 function define (collection, definition) {
