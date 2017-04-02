@@ -34,20 +34,20 @@ const remarkable = new Remarkable({
   },
   langPrefix: 'language-'
 })
-const definitions = new Map()
+const collections = new Map()
 const templates = []
 const configFile = path.join(process.cwd(), 'html.js')
 
 loadConfig()
 
 command('html', 'generate html from markdown and js', function ({parameter, option, command}) {
-  ;[...definitions].forEach(function ([collection, definition]) {
+  ;[...collections].forEach(function ([collection, definition]) {
     if (definition.singular != null) {
-      command('new:' + definition.singular, 'make a new ' + definition.singular, (definers) => {
-        const write = definition.define(definers)
+      command('new:' + definition.singular, 'make a new ' + definition.singular, (args) => {
+        const create = definition.create(args)
 
         return (args) => {
-          const object = write(args)
+          const object = create(args)
           const compiler = pathCompile(definition.route)
           const location = compiler(object)
           const file = location + '.md'
@@ -113,34 +113,48 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
 
           let object = {}
 
-          ;[...definitions].forEach(function ([collection, definition]) {
-            let result = pathMatch(definition.route)(location)
+          return [...collections].reduce(function (collected, [collection, definition]) {
+            if (collected == null) {
+              let params = pathMatch(definition.route)(location)
 
-            if (result) {
-              result.collection = collection
+              if (params) {
+                return readFile(file, 'utf-8').then(function (blocks) {
+                  blocks = blocks.split('---').map((block) => block.trim())
 
-              object = definition.read(result)
+                  if (blocks[0] === '') {
+                    blocks = blocks.slice(1)
+
+                    Object.assign(object, cson.parse(blocks.shift()))
+                  }
+
+                  Object.assign(object, {content: remarkable.render(blocks.join('---'))})
+
+                  return [collection, definition.read(Object.assign(object, params))]
+                })
+              }
             }
-          })
-
-          return readFile(file, 'utf-8').then(function (blocks) {
-            blocks = blocks.split('---').map((block) => block.trim())
-
-            if (blocks[0] === '') {
-              blocks = blocks.slice(1)
-
-              Object.assign(object, cson.parse(blocks.shift()))
-            }
-
-            Object.assign(object, {content: remarkable.render(blocks.join('---'))})
-
-            return object
-          })
+          }, null)
         }))
       })
-      .then(function (objects) {
+      .then(function (content) {
+        return content.filter((content) => content != null)
+      })
+      .then(function (content) {
+        const tree = {}
+
+        ;[...collections].forEach(function ([collection]) {
+          tree[collection] = []
+        })
+
+        content.forEach(function ([collection, item]) {
+          tree[collection].push(item)
+        })
+
+        return tree
+      })
+      .then(function (content) {
         templates.forEach(function (template) {
-          template({objects, html, safe, save})
+          template({content, html, safe, save})
         })
       })
     }
@@ -180,40 +194,46 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
     }
 
     function save (file, content) {
-      assert.equal(typeof file, 'string', 'file to save should be a string')
-
-      assert.equal(typeof content, 'string', 'content to save should be a string')
-
-      if (file.endsWith('/')) {
-        file = file + 'index.html'
+      if (Array.isArray(file)) {
+        file.forEach((file) => {
+          save(file, content)
+        })
       } else {
-        file = file + '.html'
-      }
+        assert.equal(typeof file, 'string', 'file to save should be a string')
 
-      let fullFile = path.join(process.cwd(), args.destination, file)
+        assert.equal(typeof content, 'string', 'content to save should be a string')
 
-      if (!args.noMin) {
-        content = minify(content, {
-          collapseWhitespace: true,
-          removeComments: true,
-          collapseBooleanAttributes: true,
-          removeAttributeQuotes: true,
-          removeRedundantAttributes: true,
-          removeEmptyAttributes: true,
-          removeOptionalTags: true
-        })
-      }
-
-      mkdirp(path.parse(fullFile).dir).then(function () {
-        return writeFile(fullFile, content).then(function () {
-          console.log(chalk.green(file + ' saved'))
-        })
-      })
-      .catch(function (err) {
-        if (err) {
-          throw err
+        if (file.endsWith('/')) {
+          file = file + 'index.html'
+        } else {
+          file = file + '.html'
         }
-      })
+
+        let fullFile = path.join(process.cwd(), args.destination, file)
+
+        if (!args.noMin) {
+          content = minify(content, {
+            collapseWhitespace: true,
+            removeComments: true,
+            collapseBooleanAttributes: true,
+            removeAttributeQuotes: true,
+            removeRedundantAttributes: true,
+            removeEmptyAttributes: true,
+            removeOptionalTags: true
+          })
+        }
+
+        mkdirp(path.parse(fullFile).dir).then(function () {
+          return writeFile(fullFile, content).then(function () {
+            console.log(chalk.green(file + ' saved'))
+          })
+        })
+        .catch(function (err) {
+          if (err) {
+            throw err
+          }
+        })
+      }
     }
   }
 })(process.argv.slice(2))
@@ -226,7 +246,7 @@ function loadConfig () {
 
     assert.equal(typeof required, 'function', 'the required module should be a function')
 
-    required({define, template})
+    required({collection, template})
   } catch (e) {
     error(e)
 
@@ -234,12 +254,12 @@ function loadConfig () {
   }
 }
 
-function define (collection, definition) {
-  assert.ok(definition.route, 'definitions require a route setting')
-  assert.ok(definition.define, 'definitions require a define setting')
-  assert.ok(definition.read, 'definitions require a read setting')
+function collection (collection, definition) {
+  assert.ok(definition.route, 'collections require a route setting')
+  assert.ok(definition.create, 'collections require a create setting')
+  assert.ok(definition.read, 'collections require a read setting')
 
-  definitions.set(collection, definition)
+  collections.set(collection, definition)
 }
 
 function template (template) {
