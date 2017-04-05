@@ -67,7 +67,7 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
 
           mkdirp(path.parse(fullFile).dir).then(function () {
             return writeFile(fullFile, body).then(function () {
-              console.log(chalk.green(path.join(args.destination, file) + ' saved'))
+              console.log(chalk.green('\u2714') + ' saved ' + path.join('content', file))
             })
           })
         }
@@ -225,7 +225,7 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
 
         mkdirp(path.parse(fullFile).dir).then(function () {
           return writeFile(fullFile, content).then(function () {
-            console.log(chalk.green(path.join(args.destination, file) + ' saved'))
+            console.log(chalk.green('\u2714') + ' saved ' + path.join(args.destination, file))
           })
         })
         .catch(function (err) {
