@@ -246,6 +246,9 @@ function loadConfig () {
 
     assert.equal(typeof required, 'function', 'the required module should be a function')
 
+    templates.splice(0, template.length)
+    collections.clear()
+
     required({collection, template})
   } catch (e) {
     error(e)
