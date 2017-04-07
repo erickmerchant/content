@@ -48,8 +48,7 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
 
         return (args) => {
           const object = create(args)
-          const compiler = pathCompile(definition.route)
-          const location = compiler(object)
+          const location = link(definition.route, object)
           const file = location + '.md'
           const locationObject = pathMatch(definition.route)(location)
 
@@ -154,7 +153,7 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
       })
       .then(function (content) {
         templates.forEach(function (template) {
-          template({content, html, safe, save})
+          template({content, html, safe, save, link})
         })
       })
     }
@@ -235,6 +234,10 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
         })
       }
     }
+  }
+
+  function link (route, object) {
+    return pathCompile(route)(object)
   }
 })(process.argv.slice(2))
 
