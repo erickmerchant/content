@@ -35,16 +35,16 @@ const remarkable = new Remarkable({
   langPrefix: 'language-'
 })
 const collections = new Map()
-const templates = []
+let action = () => {}
 const configFile = path.join(process.cwd(), 'html.js')
 
 loadConfig()
 
 command('html', 'generate html from markdown and js', function ({parameter, option, command}) {
   ;[...collections].forEach(function ([collection, definition]) {
-    if (definition.singular != null) {
-      command('new:' + definition.singular, 'make a new ' + definition.singular, (args) => {
-        const create = definition.create(args)
+    if (collection != null) {
+      command('new:' + collection, 'make a new ' + collection, (args) => {
+        const create = definition.command(args)
 
         return (args) => {
           const object = create(args)
@@ -106,56 +106,7 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
     }
 
     function run () {
-      glob(contentDir + '/**/*.md').then(function (files) {
-        return Promise.all(files.map((file) => {
-          let location = path.relative(contentDir, file).split('.').slice(0, -1).join('.')
-
-          let object = {}
-
-          return [...collections].reduce(function (collected, [collection, definition]) {
-            if (collected == null) {
-              let params = pathMatch(definition.route)(location)
-
-              if (params) {
-                return readFile(file, 'utf-8').then(function (blocks) {
-                  blocks = blocks.split('---').map((block) => block.trim())
-
-                  if (blocks[0] === '') {
-                    blocks = blocks.slice(1)
-
-                    Object.assign(object, cson.parse(blocks.shift()))
-                  }
-
-                  Object.assign(object, {content: remarkable.render(blocks.join('---'))})
-
-                  return [collection, definition.read(Object.assign(object, params))]
-                })
-              }
-            }
-          }, null)
-        }))
-      })
-      .then(function (content) {
-        return content.filter((content) => content != null)
-      })
-      .then(function (content) {
-        const tree = {}
-
-        ;[...collections].forEach(function ([collection]) {
-          tree[collection] = []
-        })
-
-        content.forEach(function ([collection, item]) {
-          tree[collection].push(item)
-        })
-
-        return tree
-      })
-      .then(function (content) {
-        templates.forEach(function (template) {
-          template({content, html, safe, save, link})
-        })
-      })
+      action({fetch, save, html, safe, link})
     }
 
     function html (strings, ...vals) {
@@ -234,6 +185,52 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
         })
       }
     }
+
+    function fetch (route, template) {
+      glob(contentDir + '/**/*.md').then(function (files) {
+        return Promise.all(files.map((file) => {
+          let location = path.relative(contentDir, file).split('.').slice(0, -1).join('.')
+
+          let params = pathMatch(route)(location)
+
+          if (params) {
+            let object = {}
+
+            return [...collections].reduce(function (collected, [collection, definition]) {
+              if (collected == null) {
+                let params = pathMatch(definition.route)(location)
+
+                if (params) {
+                  return readFile(file, 'utf-8').then(function (blocks) {
+                    blocks = blocks.split('---').map((block) => block.trim())
+
+                    if (blocks[0] === '') {
+                      blocks = blocks.slice(1)
+
+                      Object.assign(object, cson.parse(blocks.shift()))
+                    }
+
+                    Object.assign(object, params, {content: remarkable.render(blocks.join('---'))})
+
+                    Object.keys(definition.fields).forEach((field) => {
+                      object[field] = definition.fields[field](object[field], object)
+                    })
+
+                    return object
+                  })
+                }
+              }
+            }, null)
+          }
+
+          return null
+        }))
+      })
+      .then(function (content) {
+        return content.filter((content) => content != null)
+      })
+      .then(template)
+    }
   }
 
   function link (route, object) {
@@ -249,10 +246,9 @@ function loadConfig () {
 
     assert.equal(typeof required, 'function', 'the required module should be a function')
 
-    templates.splice(0, template.length)
     collections.clear()
 
-    required({collection, template})
+    action = required({collection})
   } catch (e) {
     error(e)
 
@@ -260,14 +256,23 @@ function loadConfig () {
   }
 }
 
-function collection (collection, definition) {
-  assert.ok(definition.route, 'collections require a route setting')
-  assert.ok(definition.create, 'collections require a create setting')
-  assert.ok(definition.read, 'collections require a read setting')
+function collection (name, route, defintion) {
+  assert.ok(name, 'collections require a name')
+  assert.ok(route, 'collections require a route')
+  assert.ok(defintion, 'collections require a defintion')
+  assert.equal(typeof defintion, 'function', 'the defintion must be a function')
 
-  collections.set(collection, definition)
-}
+  let collection = {
+    route,
+    fields: { },
+    command: () => {}
+  }
 
-function template (template) {
-  templates.push(template)
+  collection.command = defintion({field})
+
+  collections.set(name, collection)
+
+  function field (prop, modifier) {
+    collection.fields[prop] = modifier
+  }
 }
