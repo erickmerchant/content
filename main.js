@@ -106,7 +106,7 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
     }
 
     function run () {
-      action({fetch, save, html, safe, link})
+      action({get, save, html, safe, link})
     }
 
     function html (strings, ...vals) {
@@ -186,44 +186,38 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
       }
     }
 
-    function fetch (route, template) {
-      glob(contentDir + '/**/*.md').then(function (files) {
+    function get (files, template) {
+      glob(contentDir + files + '.md').then(function (files) {
         return Promise.all(files.map((file) => {
           let location = path.relative(contentDir, file).split('.').slice(0, -1).join('.')
 
-          let params = pathMatch(route)(location)
+          let object = {}
 
-          if (params) {
-            let object = {}
+          return [...collections].reduce(function (collected, [collection, definition]) {
+            if (collected == null) {
+              let params = pathMatch(definition.route)(location)
 
-            return [...collections].reduce(function (collected, [collection, definition]) {
-              if (collected == null) {
-                let params = pathMatch(definition.route)(location)
+              if (params) {
+                return readFile(file, 'utf-8').then(function (blocks) {
+                  blocks = blocks.split('---').map((block) => block.trim())
 
-                if (params) {
-                  return readFile(file, 'utf-8').then(function (blocks) {
-                    blocks = blocks.split('---').map((block) => block.trim())
+                  if (blocks[0] === '') {
+                    blocks = blocks.slice(1)
 
-                    if (blocks[0] === '') {
-                      blocks = blocks.slice(1)
+                    Object.assign(object, cson.parse(blocks.shift()))
+                  }
 
-                      Object.assign(object, cson.parse(blocks.shift()))
-                    }
+                  Object.assign(object, params, {content: remarkable.render(blocks.join('---'))})
 
-                    Object.assign(object, params, {content: remarkable.render(blocks.join('---'))})
-
-                    Object.keys(definition.fields).forEach((field) => {
-                      object[field] = definition.fields[field](object[field], object)
-                    })
-
-                    return object
+                  Object.keys(definition.fields).forEach((field) => {
+                    object[field] = definition.fields[field](object[field], object)
                   })
-                }
-              }
-            }, null)
-          }
 
-          return null
+                  return object
+                })
+              }
+            }
+          }, null)
         }))
       })
       .then(function (content) {
