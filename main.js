@@ -275,7 +275,8 @@ function collection (name, route, defintion) {
   collections.set(name, collection)
 
   function field (prop, modifier) {
-    prop = prop.split('-').map((part) => part.substr(0, 1).toUpperCase() + part.substr(1)).join('')
+    const splitProp = prop.split('-')
+    prop = splitProp[0] + splitProp.slice(1).map((part) => part.substr(0, 1).toUpperCase() + part.substr(1)).join('')
 
     collection.fields[prop] = modifier
   }
