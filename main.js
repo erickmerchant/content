@@ -37,6 +37,7 @@ const remarkable = new Remarkable({
 const collections = new Map()
 let action = () => {}
 const configFile = path.join(process.cwd(), 'html.js')
+const contentDir = path.join(process.cwd(), 'content')
 
 loadConfig()
 
@@ -81,7 +82,14 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
 
   option('no-min', {
     description: 'do not minify',
-    type: Boolean
+    type: Boolean,
+    default: false
+  })
+
+  option('dev', {
+    description: 'run in dev mode',
+    type: Boolean,
+    default: false
   })
 
   option('watch', {
@@ -91,9 +99,9 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
   })
 
   return function (args) {
-    const guarded = new Map()
+    const dev = args.dev
 
-    const contentDir = path.join(process.cwd(), 'content')
+    const guarded = new Map()
 
     run()
 
@@ -106,7 +114,7 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
     }
 
     function run () {
-      action({get, save, html, safe, link})
+      action({get, save, html, safe, link, dev})
     }
 
     function html (strings, ...vals) {
@@ -267,6 +275,8 @@ function collection (name, route, defintion) {
   collections.set(name, collection)
 
   function field (prop, modifier) {
+    prop = prop.split('-').map((part) => part.substr(0, 1).toUpperCase() + part.substr(1)).join('')
+
     collection.fields[prop] = modifier
   }
 }
