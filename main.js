@@ -189,7 +189,7 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
   }
 
   function collection (name, definition) {
-    definition({on, save, read})
+    definition({on, save, remove, read})
 
     function on (state, description, definition) {
       if (definition == null) {
@@ -201,7 +201,7 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
       command(state + ':' + name, description, definition)
     }
 
-    function save (route, object) {
+    function save (route, object, action) {
       let location = pathCompile(route)(object)
       let file = location + '.md'
 
@@ -222,11 +222,25 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
       mkdirp(path.parse(fullFile).dir).then(() => {
         return writeFile(fullFile, body).then(() => {
           console.log(chalk.green('\u2714') + ' saved ' + path.join('content', file))
+
+          if (action != null) {
+            action()
+          }
         })
       })
       .catch((err) => {
         if (err) {
           throw err
+        }
+      })
+    }
+
+    function remove (file, action) {
+      fs.unlink(file, (err) => {
+        if (err) throw err
+
+        if (action != null) {
+          action()
         }
       })
     }
