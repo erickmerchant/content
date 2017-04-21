@@ -162,7 +162,9 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
       function get (route, template) {
         const parent = globParent(route)
 
-        glob(path.join(contentDir, parent) + '/**/*.md').then((files) => {
+        glob(path.join(contentDir, parent) + '/**/*').then((files) => {
+          console.log(files)
+
           return Promise.all(files.map((file) => {
             let params = pathMatch(route + '.md')(path.relative(contentDir, file))
 
@@ -198,7 +200,7 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
         description = state + ' a ' + name
       }
 
-      command(state + ':' + name, description, definition)
+      command(name + ':' + state, description, definition)
     }
 
     function save (route, object, action) {
