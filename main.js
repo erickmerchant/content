@@ -8,7 +8,6 @@ const path = require('path')
 const thenify = require('thenify')
 const minify = require('html-minifier').minify
 const glob = thenify(require('glob'))
-const globParent = require('glob-parent')
 const fs = require('fs')
 const escape = require('escape-html')
 const cson = require('cson-parser')
@@ -159,14 +158,24 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
         }
       }
 
-      function get (route, template) {
-        const parent = globParent(route)
+      function get (routes, template) {
+        if (!Array.isArray(routes)) {
+          routes = [routes]
+        }
 
-        glob(path.join(contentDir, parent) + '/**/*').then((files) => {
-          console.log(files)
-
+        glob(path.join(contentDir, '/**/*.md')).then((files) => {
           return Promise.all(files.map((file) => {
-            let params = pathMatch(route + '.md')(path.relative(contentDir, file))
+            let params = routes.reduce((result, route) => {
+              if (!result) {
+                let match = pathMatch(route + '.md')(path.relative(contentDir, file))
+
+                if (match) {
+                  return match
+                }
+              }
+
+              return result
+            }, null)
 
             if (params) {
               return load(file, params)
