@@ -260,7 +260,7 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
       let params = pathMatch(route + '.md')(path.relative(contentDir, file))
 
       if (params) {
-        load(file, params).then(action)
+        load(file, params, false).then(action)
       } else {
         action({})
       }
@@ -284,7 +284,7 @@ function refresh () {
   }
 }
 
-function load (file, params) {
+function load (file, params, parse = true) {
   return readFile(file, 'utf-8').then((blocks) => {
     let object = {}
 
@@ -296,7 +296,15 @@ function load (file, params) {
       Object.assign(object, cson.parse(blocks.shift()))
     }
 
-    Object.assign(object, params, {content: remarkable.render(blocks.join('---'))})
+    Object.assign(object, params)
+
+    let content = blocks.join('---')
+
+    if (parse) {
+      content = remarkable.render(content)
+    }
+
+    Object.assign(object, {content})
 
     return object
   })
