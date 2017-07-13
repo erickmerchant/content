@@ -1,6 +1,6 @@
 {
   "name": "@erickmerchant/html",
-  "version": "5.2.5",
+  "version": "5.2.6",
   "description": "",
   "bin": {
     "html": "./main.js"
