@@ -25,7 +25,7 @@
     "escape-html": "^1.0.3",
     "glob": "^7.1.1",
     "highlights": "^3.1.0",
-    "html-minifier": "^3.4.1",
+    "html-minifier": "^3.5.3",
     "mkdirp": "^0.5.1",
     "path-match": "^1.2.4",
     "path-to-regexp": "^1.7.0",
