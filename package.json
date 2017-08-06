@@ -34,6 +34,6 @@
     "thenify": "^3.2.1"
   },
   "devDependencies": {
-    "standard": "^10.0.0"
+    "standard": "^10.0.3"
   }
 }
