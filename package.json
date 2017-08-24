@@ -28,7 +28,7 @@
     "html-minifier": "^3.5.3",
     "mkdirp": "^0.5.1",
     "path-match": "^1.2.4",
-    "path-to-regexp": "^1.7.0",
+    "path-to-regexp": "^2.0.0",
     "remarkable": "^1.7.1",
     "sergeant": "^15.4.9",
     "thenify": "^3.2.1"
