@@ -30,7 +30,7 @@
     "path-match": "^1.2.4",
     "path-to-regexp": "^2.0.0",
     "remarkable": "^1.7.1",
-    "sergeant": "^15.4.10",
+    "sergeant": "^15.4.11",
     "thenify": "^3.2.1"
   },
   "devDependencies": {
