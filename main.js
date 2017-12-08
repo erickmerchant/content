@@ -48,13 +48,13 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
   option('no-min', {
     description: 'do not minify',
     type: Boolean,
-    default: false
+    default: { value: false }
   })
 
   option('dev', {
     description: 'run in dev mode',
     type: Boolean,
-    default: false
+    default: { value: false }
   })
 
   option('watch', {
