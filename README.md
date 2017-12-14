@@ -1,6 +1,6 @@
 # @erickmerchant/html
 
-Generate html from markdown and js. Could be part of a static site set-up. Install it globally with `npm install --global @erickmerchant/html`. Requires the following file structure.
+Generate html from markdown and js. Could be part of a static site set-up. Install it with `npm i @erickmerchant/html`. Requires the following file structure.
 
 ```
 ├── content
