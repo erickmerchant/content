@@ -20,7 +20,7 @@ const readFile = thenify(fs.readFile)
 const writeFile = thenify(fs.writeFile)
 const highlighter = new Highlights()
 const remarkable = new Remarkable({
-  highlight: (code, lang) => {
+  highlight (code, lang) {
     if (!lang) {
       return escape(code)
     }
@@ -37,7 +37,7 @@ const remarkable = new Remarkable({
 const configFile = path.join(process.cwd(), 'html.js')
 const contentDir = path.join(process.cwd(), 'content')
 
-command('html', 'generate html from markdown and js', ({parameter, option, command}) => {
+command('html', 'generate html from markdown and js', function ({parameter, option, command}) {
   let action = refresh()({collection})
 
   parameter('destination', {
@@ -63,13 +63,13 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
     aliases: ['w']
   })
 
-  return (args) => {
+  return function (args) {
     const dev = args.dev
 
     run()
 
     if (args.watch) {
-      chokidar.watch([contentDir + '/**/*.md', configFile], {ignoreInitial: true}).on('all', () => {
+      chokidar.watch([contentDir + '/**/*.md', configFile], {ignoreInitial: true}).on('all', function () {
         action = refresh()({collection})
 
         run()
@@ -84,7 +84,7 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
       function html (strings, ...vals) {
         let result = ''
 
-        strings.forEach((str, key) => {
+        strings.forEach(function (str, key) {
           result += str
 
           if (vals[key]) {
@@ -117,7 +117,7 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
 
       function save (file, content) {
         if (Array.isArray(file)) {
-          file.forEach((file) => {
+          file.forEach(function (file) {
             save(file, content)
           })
         } else {
@@ -145,12 +145,12 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
             })
           }
 
-          mkdirp(path.parse(fullFile).dir).then(() => {
-            return writeFile(fullFile, content).then(() => {
+          mkdirp(path.parse(fullFile).dir).then(function () {
+            return writeFile(fullFile, content).then(function () {
               console.log(chalk.green('\u2714') + ' saved ' + path.join(args.destination, file))
             })
           })
-          .catch((err) => {
+          .catch(function (err) {
             if (err) {
               throw err
             }
@@ -163,9 +163,9 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
           routes = [routes]
         }
 
-        glob(path.join(contentDir, '/**/*.md')).then((files) => {
-          return Promise.all(files.map((file) => {
-            let params = routes.reduce((result, route) => {
+        glob(path.join(contentDir, '/**/*.md')).then(function (files) {
+          return Promise.all(files.map(function (file) {
+            let params = routes.reduce(function (result, route) {
               if (!result) {
                 let match = pathMatch(route + '.md')(path.relative(contentDir, file))
 
@@ -182,11 +182,11 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
             }
           }))
         })
-        .then((content) => {
+        .then(function (content) {
           return content.filter((content) => content != null)
         })
         .then(template)
-        .catch((err) => {
+        .catch(function (err) {
           if (err) {
             throw err
           }
@@ -218,7 +218,7 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
 
       const locationObject = pathMatch(route)(location)
 
-      Object.keys(locationObject).forEach((key) => {
+      Object.keys(locationObject).forEach(function (key) {
         delete object[key]
       })
 
@@ -230,8 +230,8 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
 
       const body = '---\n' + cson.stringify(object, null, 2) + '\n---\n' + content + '\n'
 
-      mkdirp(path.parse(fullFile).dir).then(() => {
-        return writeFile(fullFile, body).then(() => {
+      mkdirp(path.parse(fullFile).dir).then(function () {
+        return writeFile(fullFile, body).then(function () {
           console.log(chalk.green('\u2714') + ' saved ' + path.join('content', file))
 
           if (action != null) {
@@ -239,7 +239,7 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
           }
         })
       })
-      .catch((err) => {
+      .catch(function (err) {
         if (err) {
           throw err
         }
@@ -247,7 +247,7 @@ command('html', 'generate html from markdown and js', ({parameter, option, comma
     }
 
     function remove (file, action) {
-      fs.unlink(file, (err) => {
+      fs.unlink(file, function (err) {
         if (err) throw err
 
         if (action != null) {
@@ -285,7 +285,7 @@ function refresh () {
 }
 
 function load (file, params, parse = true) {
-  return readFile(file, 'utf-8').then((blocks) => {
+  return readFile(file, 'utf-8').then(function (blocks) {
     let object = {}
 
     blocks = blocks.split('---').map((block) => block.trim())
@@ -308,7 +308,7 @@ function load (file, params, parse = true) {
 
     return object
   })
-  .catch((err) => {
+  .catch(function (err) {
     if (err) {
       throw err
     }
