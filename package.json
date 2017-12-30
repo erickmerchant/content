@@ -19,18 +19,17 @@
   },
   "homepage": "https://github.com/erickmerchant/html#readme",
   "dependencies": {
+    "@erickmerchant/conditional-watch": "^2.0.1",
     "chalk": "^2.3.0",
-    "chokidar": "^1.6.1",
     "cson-parser": "^2.0.0",
     "escape-html": "^1.0.3",
     "glob": "^7.1.1",
-    "highlights": "^3.1.1",
     "html-minifier": "^3.5.8",
+    "marky-markdown": "^11.3.2",
     "mkdirp": "^0.5.1",
-    "path-match": "^1.2.4",
     "path-to-regexp": "^2.1.0",
-    "remarkable": "^1.7.1",
     "sergeant": "^17.2.1",
+    "slugg": "^1.2.1",
     "thenify": "^3.2.1"
   },
   "devDependencies": {
