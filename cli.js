@@ -1,25 +1,23 @@
 #!/usr/bin/env node
 const command = require('sergeant')
-const error = require('sergeant/error')
-const assert = require('assert')
 const chalk = require('chalk')
-const chokidar = require('chokidar')
+const watch = require('@erickmerchant/conditional-watch')
 const path = require('path')
 const thenify = require('thenify')
 const minify = require('html-minifier').minify
 const glob = thenify(require('glob'))
 const fs = require('fs')
-const escape = require('escape-html')
+const escapeHTML = require('escape-html')
+const slugify = require('slugg')
 const cson = require('cson-parser')
-const Highlights = require('highlights')
-const Remarkable = require('remarkable')
-const pathMatch = require('path-match')()
-const pathCompile = require('path-to-regexp').compile
+const pathTo = require('path-to-regexp')
 const mkdirp = thenify(require('mkdirp'))
 const readFile = thenify(fs.readFile)
 const writeFile = thenify(fs.writeFile)
+const rename = thenify(fs.rename)
+const Highlights = require('highlights')
 const highlighter = new Highlights()
-const remarkable = new Remarkable({
+const markdown = require('markdown-it')({
   highlight (code, lang) {
     if (!lang) {
       return escape(code)
@@ -34,14 +32,114 @@ const remarkable = new Remarkable({
   },
   langPrefix: 'language-'
 })
-const configFile = path.join(process.cwd(), 'html.js')
-const contentDir = path.join(process.cwd(), 'content')
 
 command('html', 'generate html from markdown and js', function ({parameter, option, command}) {
-  let action = refresh()({collection})
+  command('make', 'make a new markdown file', function ({parameter, option}) {
+    parameter('destination', {
+      description: 'the directory to save to',
+      required: true
+    })
+
+    option('title', {
+      description: 'the title',
+      required: true
+    })
+
+    return function (args) {
+      const now = Date.now()
+
+      const slug = slugify(args.title)
+
+      const object = {title: args.title}
+
+      const file = path.join(args.destination, `${now}.${slug}.md`)
+
+      return mkdirp(path.dirname(file)).then(function () {
+        return writeFile(file, stringify(object)).then(function () {
+          console.log(chalk.green('\u2714') + ' saved ' + file)
+        })
+      })
+    }
+  })
+
+  command('move', 'move a markdown file', function ({parameter, option}) {
+    parameter('source', {
+      description: 'the file to move',
+      required: true
+    })
+
+    parameter('destination', {
+      description: 'the directory to move it to',
+      required: true
+    })
+
+    option('title', {
+      description: 'a new title'
+    })
+
+    option('update', {
+      description: 'update the date and time',
+      type: Boolean,
+      default: { value: false }
+    })
+
+    return function (args) {
+      const pathResult = pathTo(':time(\\d+).:slug.md').exec(path.basename(args.source))
+      let now
+      let slug
+
+      if (pathResult) {
+        now = pathResult[1]
+
+        slug = pathResult[2]
+      }
+
+      return readFile(args.source, 'utf-8').then(function (string) {
+        const object = parse(string)
+
+        if (args.update) {
+          now = Date.now()
+        }
+
+        if (args.title != null) {
+          slug = slugify(args.title)
+
+          object.title = args.title
+        }
+
+        if (!now) {
+          return Promise.reject(new Error('time not set'))
+        }
+
+        if (!slug) {
+          return Promise.reject(new Error('slug not set'))
+        }
+
+        const file = path.join(args.destination, `${now}.${slug}.md`)
+
+        return mkdirp(path.dirname(file)).then(function () {
+          return rename(args.source, file).then(function () {
+            return writeFile(file, stringify(object)).then(function () {
+              console.log(chalk.green('\u2714') + ' saved ' + file)
+            })
+          })
+        })
+      })
+    }
+  })
+
+  parameter('content', {
+    description: 'directory containing your markdown',
+    required: true
+  })
+
+  parameter('template', {
+    description: 'a js file that will generate html',
+    required: true
+  })
 
   parameter('destination', {
-    description: 'where to save to',
+    description: 'the directory to save to',
     required: true
   })
 
@@ -51,87 +149,60 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
     default: { value: false }
   })
 
-  option('dev', {
-    description: 'run in dev mode',
-    type: Boolean,
-    default: { value: false }
-  })
-
   option('watch', {
     description: 'watch for changes',
     type: Boolean,
-    aliases: ['w']
+    aliases: ['w'],
+    default: { value: false }
   })
 
   return function (args) {
-    const dev = args.dev
+    watch(args.watch, args.content, function () {
+      return glob(path.join(args.content, '**/*.md')).then(function (files) {
+        return Promise.all(files.map(function (file) {
+          const pathResult = pathTo(':time(\\d+).:slug.md').exec(path.basename(file))
+          let object = {}
 
-    run()
+          if (pathResult) {
+            object.date = new Date(Number(pathResult[1]))
 
-    if (args.watch) {
-      chokidar.watch([contentDir + '/**/*.md', configFile], {ignoreInitial: true}).on('all', function () {
-        action = refresh()({collection})
-
-        run()
-      })
-    }
-
-    function run () {
-      const guarded = new Map()
-
-      action({get, save, html, safe, link, dev})
-
-      function html (strings, ...vals) {
-        let result = ''
-
-        strings.forEach(function (str, key) {
-          result += str
-
-          if (vals[key]) {
-            let val = vals[key]
-
-            if (guarded.has(val)) {
-              val = guarded.get(val)
-            } else {
-              val = escape(val)
-            }
-
-            if (Array.isArray(val)) {
-              val = val.join('')
-            }
-
-            result += val
+            object.slug = pathResult[2]
           }
-        })
 
-        return result.trim()
-      }
+          object.categories = path.dirname(path.relative(args.content, file)).split('/')
 
-      function safe (val) {
-        let symbol = Symbol('safe')
+          return readFile(file, 'utf-8').then(function (string) {
+            object = Object.assign(parse(string), object)
 
-        guarded.set(symbol, val)
+            object.content = markdown.render(object.content)
 
-        return symbol
-      }
-
-      function save (file, content) {
-        if (Array.isArray(file)) {
-          file.forEach(function (file) {
-            save(file, content)
+            return object
           })
-        } else {
-          assert.equal(typeof file, 'string', 'file to save should be a string')
+        }))
+      })
+      .then(function (content) {
+        let templatePath = path.join(process.cwd(), args.template)
 
-          assert.equal(typeof content, 'string', 'content to save should be a string')
+        delete require.cache[templatePath]
 
-          if (file.endsWith('/')) {
-            file = file + 'index.html'
-          } else {
-            file = file + '.html'
-          }
+        const template = require(templatePath)
 
-          let fullFile = path.join(process.cwd(), args.destination, file)
+        const guarded = new Map()
+
+        const routeDefinitions = new Map()
+
+        const htmls = new Map()
+
+        const pages = new Set()
+
+        const symbol = template({content, route, html, safe, link})
+
+        return Promise.all([...pages].map(function (page) {
+          let file = page.endsWith('/') ? page + 'index.html' : page
+
+          file = path.join(args.destination, file)
+
+          let content = concat(page, symbol)
 
           if (!args.noMin) {
             content = minify(content, {
@@ -145,172 +216,118 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
             })
           }
 
-          mkdirp(path.parse(fullFile).dir).then(function () {
-            return writeFile(fullFile, content).then(function () {
-              console.log(chalk.green('\u2714') + ' saved ' + path.join(args.destination, file))
+          return mkdirp(path.dirname(file)).then(function () {
+            return writeFile(file, content).then(function () {
+              console.log(chalk.green('\u2714') + ' saved ' + file)
             })
           })
-          .catch(function (err) {
-            if (err) {
-              throw err
-            }
-          })
-        }
-      }
+        }))
 
-      function get (routes, template) {
-        if (!Array.isArray(routes)) {
-          routes = [routes]
-        }
+        function concat (page, symbol) {
+          const fragments = htmls.get(symbol)
 
-        glob(path.join(contentDir, '/**/*.md')).then(function (files) {
-          return Promise.all(files.map(function (file) {
-            let params = routes.reduce(function (result, route) {
-              if (!result) {
-                let match = pathMatch(route + '.md')(path.relative(contentDir, file))
+          return fragments.map(escape).join('')
 
-                if (match) {
-                  return match
-                }
+          function escape (fragment) {
+            if (routeDefinitions.has(fragment) || htmls.has(fragment) || guarded.has(fragment)) {
+              if (guarded.has(fragment)) {
+                fragment = guarded.get(fragment)
               }
 
-              return result
-            }, null)
+              if (routeDefinitions.has(fragment)) {
+                let definition = routeDefinitions.get(fragment)
 
-            if (params) {
-              return load(file, params)
+                fragment = definition.get(page) || ''
+              }
+
+              if (htmls.has(fragment)) {
+                fragment = concat(page, fragment)
+              }
+
+              return fragment
             }
-          }))
-        })
-        .then(function (content) {
-          return content.filter((content) => content != null)
-        })
-        .then(template)
-        .catch(function (err) {
-          if (err) {
-            throw err
+
+            if (Array.isArray(fragment)) {
+              return fragment.map(escape).join('')
+            }
+
+            return escapeHTML(fragment)
           }
-        })
-      }
+        }
 
-      function link (route, object) {
-        return pathCompile(route)(object)
-      }
-    }
-  }
+        function route (definer) {
+          const symbol = Symbol('route')
+          const definition = new Map()
 
-  function collection (name, definition) {
-    definition({on, save, remove, read})
+          definer(function (page, content) {
+            pages.add(page)
 
-    function on (state, description, definition) {
-      if (definition == null) {
-        definition = description
+            definition.set(page, content)
+          })
 
-        description = state + ' a ' + name
-      }
+          routeDefinitions.set(symbol, definition)
 
-      command(name + ':' + state, description, definition)
-    }
+          return symbol
+        }
 
-    function save (route, object, action) {
-      let location = pathCompile(route)(object)
-      let file = location + '.md'
+        function html (strings, ...vals) {
+          const result = []
 
-      const locationObject = pathMatch(route)(location)
+          strings.forEach(function (str, key) {
+            result.push(safe(str))
 
-      Object.keys(locationObject).forEach(function (key) {
-        delete object[key]
-      })
+            if (vals[key]) {
+              let val = vals[key]
 
-      const fullFile = path.join(process.cwd(), 'content', file)
+              result.push(val)
+            }
+          })
 
-      let content = object.content || ''
+          let symbol = Symbol('html')
 
-      delete object.content
+          htmls.set(symbol, result)
 
-      const body = '---\n' + cson.stringify(object, null, 2) + '\n---\n' + content + '\n'
+          return symbol
+        }
 
-      mkdirp(path.parse(fullFile).dir).then(function () {
-        return writeFile(fullFile, body).then(function () {
-          console.log(chalk.green('\u2714') + ' saved ' + path.join('content', file))
+        function safe (val) {
+          const symbol = Symbol('safe')
 
-          if (action != null) {
-            action()
-          }
-        })
-      })
-      .catch(function (err) {
-        if (err) {
-          throw err
+          guarded.set(symbol, val)
+
+          return symbol
+        }
+
+        function link (route, object) {
+          return pathTo.compile(route)(object)
         }
       })
-    }
-
-    function remove (file, action) {
-      fs.unlink(file, function (err) {
-        if (err) throw err
-
-        if (action != null) {
-          action()
-        }
-      })
-    }
-
-    function read (file, route, action) {
-      let params = pathMatch(route + '.md')(path.relative(contentDir, file))
-
-      if (params) {
-        load(file, params, false).then(action)
-      } else {
-        action({})
-      }
-    }
+    })
   }
 })(process.argv.slice(2))
 
-function refresh () {
-  try {
-    delete require.cache[configFile]
+function parse (string) {
+  let object = {}
 
-    const required = require(configFile)
+  let blocks = string.split('---').map((block) => block.trim())
 
-    assert.equal(typeof required, 'function', 'the required module should be a function')
+  if (blocks[0] === '') {
+    blocks = blocks.slice(1)
 
-    return required
-  } catch (e) {
-    error(e)
-
-    process.exit(1)
+    object = cson.parse(blocks.shift())
   }
+
+  object.content = blocks.join('---')
+
+  return object
 }
 
-function load (file, params, parse = true) {
-  return readFile(file, 'utf-8').then(function (blocks) {
-    let object = {}
+function stringify (object) {
+  object = Object.assign({}, object)
 
-    blocks = blocks.split('---').map((block) => block.trim())
+  const content = object.content || ''
 
-    if (blocks[0] === '') {
-      blocks = blocks.slice(1)
+  delete object.content
 
-      Object.assign(object, cson.parse(blocks.shift()))
-    }
-
-    Object.assign(object, params)
-
-    let content = blocks.join('---')
-
-    if (parse) {
-      content = remarkable.render(content)
-    }
-
-    Object.assign(object, {content})
-
-    return object
-  })
-  .catch(function (err) {
-    if (err) {
-      throw err
-    }
-  })
+  return ['---', cson.stringify(object, null, 2), '---', content].join('\n')
 }
