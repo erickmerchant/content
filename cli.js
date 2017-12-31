@@ -1,41 +1,37 @@
 #!/usr/bin/env node
 const command = require('sergeant')
-// const error = require('sergeant/error')
-// const assert = require('assert')
-// const chalk = require('chalk')
+const chalk = require('chalk')
 const watch = require('@erickmerchant/conditional-watch')
 const path = require('path')
 const thenify = require('thenify')
-// const minify = require('html-minifier').minify
+const minify = require('html-minifier').minify
 const glob = thenify(require('glob'))
 const fs = require('fs')
-// const escape = require('escape-html')
+const escapeHTML = require('escape-html')
 const slugify = require('slugg')
 const cson = require('cson-parser')
-// const Highlights = require('highlights')
-// const Remarkable = require('remarkable')
-// const pathMatch = require('path-match')()
 const pathTo = require('path-to-regexp')
 const mkdirp = thenify(require('mkdirp'))
 const readFile = thenify(fs.readFile)
 const writeFile = thenify(fs.writeFile)
 const rename = thenify(fs.rename)
-// const highlighter = new Highlights()
-// const remarkable = new Remarkable({
-//   highlight (code, lang) {
-//     if (!lang) {
-//       return escape(code)
-//     }
-//
-//     code = highlighter.highlightSync({
-//       fileContents: code.trim(),
-//       scopeName: 'source.js'
-//     })
-//
-//     return code
-//   },
-//   langPrefix: 'language-'
-// })
+const Highlights = require('highlights')
+const highlighter = new Highlights()
+const markdown = require('markdown-it')({
+  highlight (code, lang) {
+    if (!lang) {
+      return escape(code)
+    }
+
+    code = highlighter.highlightSync({
+      fileContents: code.trim(),
+      scopeName: 'source.js'
+    })
+
+    return code
+  },
+  langPrefix: 'language-'
+})
 
 command('html', 'generate html from markdown and js', function ({parameter, option, command}) {
   command('make', 'make a new markdown file', function ({parameter, option}) {
@@ -59,7 +55,9 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
       const file = path.join(args.destination, `${now}.${slug}.md`)
 
       return mkdirp(path.dirname(file)).then(function () {
-        return writeFile(file, stringify(object))
+        return writeFile(file, stringify(object)).then(function () {
+          console.log(chalk.green('\u2714') + ' saved ' + file)
+        })
       })
     }
   })
@@ -86,7 +84,7 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
     })
 
     return function (args) {
-      let pathResult = pathTo(':time(\\d+).:slug.md').exec(path.basename(args.source))
+      const pathResult = pathTo(':time(\\d+).:slug.md').exec(path.basename(args.source))
       let now
       let slug
 
@@ -121,7 +119,9 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
 
         return mkdirp(path.dirname(file)).then(function () {
           return rename(args.source, file).then(function () {
-            return writeFile(file, stringify(object))
+            return writeFile(file, stringify(object)).then(function () {
+              console.log(chalk.green('\u2714') + ' saved ' + file)
+            })
           })
         })
       })
@@ -135,6 +135,11 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
 
   parameter('template', {
     description: 'a js file that will generate html',
+    required: true
+  })
+
+  parameter('destination', {
+    description: 'the directory to save to',
     required: true
   })
 
@@ -155,7 +160,7 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
     watch(args.watch, args.content, function () {
       return glob(path.join(args.content, '**/*.md')).then(function (files) {
         return Promise.all(files.map(function (file) {
-          let pathResult = pathTo(':time(\\d+).:slug.md').exec(path.basename(file))
+          const pathResult = pathTo(':time(\\d+).:slug.md').exec(path.basename(file))
           let object = {}
 
           if (pathResult) {
@@ -167,51 +172,126 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
           object.categories = path.dirname(path.relative(args.content, file)).split('/')
 
           return readFile(file, 'utf-8').then(function (string) {
-            return Object.assign(parse(string), object)
+            object = Object.assign(parse(string), object)
+
+            object.content = markdown.render(object.content)
+
+            return object
           })
         }))
       })
       .then(function (content) {
-        const template = require(args.template)
+        let templatePath = path.join(process.cwd(), args.template)
+
+        delete require.cache[templatePath]
+
+        const template = require(templatePath)
 
         const guarded = new Map()
 
-        const pages = []
+        const routeDefinitions = new Map()
 
-        const result = template({content, route, html, safe, link})
+        const htmls = new Map()
 
-        function route (definition) {
+        const pages = new Set()
 
+        const symbol = template({content, route, html, safe, link})
+
+        return Promise.all([...pages].map(function (page) {
+          let file = page.endsWith('/') ? page + 'index.html' : page
+
+          file = path.join(args.destination, file)
+
+          let content = concat(page, symbol)
+
+          if (!args.noMin) {
+            content = minify(content, {
+              collapseWhitespace: true,
+              removeComments: true,
+              collapseBooleanAttributes: true,
+              removeAttributeQuotes: true,
+              removeRedundantAttributes: true,
+              removeEmptyAttributes: true,
+              removeOptionalTags: true
+            })
+          }
+
+          return mkdirp(path.dirname(file)).then(function () {
+            return writeFile(file, content).then(function () {
+              console.log(chalk.green('\u2714') + ' saved ' + file)
+            })
+          })
+        }))
+
+        function concat (page, symbol) {
+          const fragments = htmls.get(symbol)
+
+          return fragments.map(escape).join('')
+
+          function escape (fragment) {
+            if (routeDefinitions.has(fragment) || htmls.has(fragment) || guarded.has(fragment)) {
+              if (guarded.has(fragment)) {
+                fragment = guarded.get(fragment)
+              }
+
+              if (routeDefinitions.has(fragment)) {
+                let definition = routeDefinitions.get(fragment)
+
+                fragment = definition.get(page) || ''
+              }
+
+              if (htmls.has(fragment)) {
+                fragment = concat(page, fragment)
+              }
+
+              return fragment
+            }
+
+            if (Array.isArray(fragment)) {
+              return fragment.map(escape).join('')
+            }
+
+            return escapeHTML(fragment)
+          }
+        }
+
+        function route (definer) {
+          const symbol = Symbol('route')
+          const definition = new Map()
+
+          definer(function (page, content) {
+            pages.add(page)
+
+            definition.set(page, content)
+          })
+
+          routeDefinitions.set(symbol, definition)
+
+          return symbol
         }
 
         function html (strings, ...vals) {
-          let result = []
+          const result = []
 
           strings.forEach(function (str, key) {
-            result.push(str)
+            result.push(safe(str))
 
             if (vals[key]) {
               let val = vals[key]
-
-              if (guarded.has(val)) {
-                val = guarded.get(val)
-              } else {
-                val = escape(val)
-              }
-
-              if (Array.isArray(val)) {
-                val = val.join('')
-              }
 
               result.push(val)
             }
           })
 
-          return result
+          let symbol = Symbol('html')
+
+          htmls.set(symbol, result)
+
+          return symbol
         }
 
         function safe (val) {
-          let symbol = Symbol('safe')
+          const symbol = Symbol('safe')
 
           guarded.set(symbol, val)
 
@@ -245,7 +325,7 @@ function parse (string) {
 function stringify (object) {
   object = Object.assign({}, object)
 
-  let content = object.content || ''
+  const content = object.content || ''
 
   delete object.content
 
