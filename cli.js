@@ -159,6 +159,8 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
   return function (args) {
     watch(args.watch, args.content, function () {
       return glob(path.join(args.content, '**/*.md')).then(function (files) {
+        files = files.reverse()
+
         return Promise.all(files.map(function (file) {
           const pathResult = pathTo(':time(\\d+).:slug.md').exec(path.basename(file))
           let object = {}
