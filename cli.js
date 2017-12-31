@@ -191,6 +191,8 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
 
         const routeDefinitions = new Map()
 
+        const currentPage = Symbol('route')
+
         const htmls = new Map()
 
         const pages = new Set()
@@ -229,6 +231,10 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
           return fragments.map(escape).join('')
 
           function escape (fragment) {
+            if (fragment === currentPage) {
+              return page
+            }
+
             if (routeDefinitions.has(fragment) || htmls.has(fragment) || guarded.has(fragment)) {
               if (guarded.has(fragment)) {
                 fragment = guarded.get(fragment)
@@ -256,6 +262,10 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
         }
 
         function route (definer) {
+          if (definer == null) {
+            return currentPage
+          }
+
           const symbol = Symbol('route')
           const definition = new Map()
 
