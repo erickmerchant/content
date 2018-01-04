@@ -22,5 +22,5 @@ command('html', 'generate html from markdown and js', function ({parameter, opti
 
   command('move', 'move a markdown file', move(deps))
 
-  generate(deps)({parameter, option})
+  return generate(deps)({parameter, option})
 })(process.argv.slice(2))

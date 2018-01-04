@@ -1,9 +1,18 @@
+const assert = require('assert')
 const chalk = require('chalk')
 const path = require('path')
 const slugify = require('slugg')
 const cson = require('./cson')
 
 module.exports = function (deps) {
+  assert.equal(typeof deps.makeDir, 'function')
+
+  assert.equal(typeof deps.writeFile, 'function')
+
+  assert.equal(typeof deps.out, 'object')
+
+  assert.equal(typeof deps.out.write, 'function')
+
   return function ({parameter, option}) {
     parameter('destination', {
       description: 'the directory to save to',
@@ -26,7 +35,7 @@ module.exports = function (deps) {
 
       return deps.makeDir(path.dirname(file)).then(function () {
         return deps.writeFile(file, cson.stringify(object)).then(function () {
-          deps.out(chalk.green('\u2714') + ' saved ' + file + '\n')
+          deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
         })
       })
     }

@@ -1,3 +1,4 @@
+const assert = require('assert')
 const chalk = require('chalk')
 const path = require('path')
 const thenify = require('thenify')
@@ -27,6 +28,16 @@ const markdown = require('markdown-it')({
 const cson = require('./cson')
 
 module.exports = function (deps) {
+  assert.equal(typeof deps.watch, 'function')
+
+  assert.equal(typeof deps.makeDir, 'function')
+
+  assert.equal(typeof deps.writeFile, 'function')
+
+  assert.equal(typeof deps.out, 'object')
+
+  assert.equal(typeof deps.out.write, 'function')
+
   return function ({parameter, option}) {
     parameter('content', {
       description: 'directory containing your markdown',
@@ -57,7 +68,9 @@ module.exports = function (deps) {
     })
 
     return function (args) {
-      deps.watch(args.watch, args.content, function () {
+      let templatePath = path.join(process.cwd(), args.template)
+
+      return deps.watch(args.watch, [templatePath, args.content], function () {
         return glob(path.join(args.content, '**/*.md')).then(function (files) {
           files = files.reverse()
 
@@ -83,8 +96,6 @@ module.exports = function (deps) {
           }))
         })
         .then(function (content) {
-          let templatePath = path.join(process.cwd(), args.template)
-
           delete require.cache[templatePath]
 
           const template = require(templatePath)
@@ -122,7 +133,7 @@ module.exports = function (deps) {
 
             return deps.makeDir(path.dirname(file)).then(function () {
               return deps.writeFile(file, content).then(function () {
-                deps.out(chalk.green('\u2714') + ' saved ' + file + '\n')
+                deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
               })
             })
           }))
