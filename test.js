@@ -13,12 +13,12 @@ const noopDeps = {
   watch: () => {},
   out
 }
-// const noopDefiners = {
-//   parameter () {},
-//   option () {}
-// }
+const noopDefiners = {
+  parameter () {},
+  option () {}
+}
 
-test('index.js generate - options and parameters', function (t) {
+test('src/generate - options and parameters', function (t) {
   t.plan(13)
 
   const parameters = {}
@@ -60,7 +60,26 @@ test('index.js generate - options and parameters', function (t) {
   t.deepEqual(options.watch.aliases, ['w'])
 })
 
-test('index.js make - options and parameters', function (t) {
+test('src/generate', function (t) {
+  t.plan(0)
+
+  require('./src/generate')({
+    makeDir: () => Promise.resolve(true),
+    writeFile: () => Promise.resolve(true),
+    watch: (watch, directory, cb) => {
+      cb()
+    },
+    out
+  })(noopDefiners)({
+    template: './fixtures/template.js',
+    watch: false,
+    content: './fixtures/',
+    destination: './build/',
+    noMin: false
+  })
+})
+
+test('src/make - options and parameters', function (t) {
   t.plan(4)
 
   const parameters = {}
@@ -84,7 +103,7 @@ test('index.js make - options and parameters', function (t) {
   t.equal(options.title.required, true)
 })
 
-test('index.js move - options and parameters', function (t) {
+test('src/move - options and parameters', function (t) {
   t.plan(7)
 
   const parameters = {}
@@ -114,7 +133,7 @@ test('index.js move - options and parameters', function (t) {
   t.equal(options.update.default.value, false)
 })
 
-test('cli.js', async function (t) {
+test('cli', async function (t) {
   t.plan(5)
 
   try {
