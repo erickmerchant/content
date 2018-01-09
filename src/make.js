@@ -24,14 +24,18 @@ module.exports = function (deps) {
       required: true
     })
 
-    return function (args) {
-      const now = Date.now()
+    option('date', {
+      description: 'add the current time',
+      type: Boolean,
+      default: { value: false }
+    })
 
+    return function (args) {
       const slug = slugify(args.title)
 
       const object = {title: args.title}
 
-      const file = path.join(args.destination, `${now}.${slug}.md`)
+      const file = path.join(args.destination, `${args.date ? Date.now() + '.' : ''}${slug}.md`)
 
       return deps.makeDir(path.dirname(file)).then(function () {
         return deps.writeFile(file, cson.stringify(object)).then(function () {

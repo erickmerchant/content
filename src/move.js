@@ -33,7 +33,13 @@ module.exports = function (deps) {
     })
 
     option('update', {
-      description: 'update the date and time',
+      description: 'update the time',
+      type: Boolean,
+      default: { value: false }
+    })
+
+    option('no-date', {
+      description: 'do not include the time',
       type: Boolean,
       default: { value: false }
     })
@@ -47,6 +53,10 @@ module.exports = function (deps) {
         now = pathResult[1]
 
         slug = pathResult[2]
+      } else {
+        now = Date.now()
+
+        slug = path.basename(args.source, '.md')
       }
 
       return readFile(args.source, 'utf-8').then(function (string) {
@@ -62,15 +72,7 @@ module.exports = function (deps) {
           object.title = args.title
         }
 
-        if (!now) {
-          return Promise.reject(new Error('time not set'))
-        }
-
-        if (!slug) {
-          return Promise.reject(new Error('slug not set'))
-        }
-
-        const file = path.join(args.destination, `${now}.${slug}.md`)
+        const file = path.join(args.destination, `${!now || args.noDate ? '' : now + '.'}${slug}.md`)
 
         return deps.makeDir(path.dirname(file)).then(function () {
           return deps.rename(args.source, file).then(function () {

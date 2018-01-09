@@ -13,7 +13,7 @@ const highlighter = new Highlights()
 const markdown = require('markdown-it')({
   highlight (code, lang) {
     if (!lang) {
-      return escape(code)
+      return escapeHTML(code)
     }
 
     code = highlighter.highlightSync({
@@ -82,6 +82,10 @@ module.exports = function (deps) {
               object.date = new Date(Number(pathResult[1]))
 
               object.slug = pathResult[2]
+            } else {
+              object.date = new Date()
+
+              object.slug = path.basename(file, '.md')
             }
 
             object.categories = path.dirname(path.relative(args.content, file)).split('/')
