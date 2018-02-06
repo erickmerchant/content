@@ -21,7 +21,7 @@
   "dependencies": {
     "@erickmerchant/conditional-watch": "^2.1.2",
     "chalk": "^2.3.0",
-    "cson-parser": "^2.0.1",
+    "cson-parser": "^3.0.0",
     "escape-html": "^1.0.3",
     "glob": "^7.1.1",
     "highlights": "^3.1.1",
