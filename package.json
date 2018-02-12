@@ -20,7 +20,7 @@
   "homepage": "https://github.com/erickmerchant/html#readme",
   "dependencies": {
     "@erickmerchant/conditional-watch": "^2.1.2",
-    "chalk": "^2.3.0",
+    "chalk": "^2.3.1",
     "cson-parser": "^3.0.0",
     "escape-html": "^1.0.3",
     "glob": "^7.1.1",
@@ -29,7 +29,7 @@
     "markdown-it": "^8.4.0",
     "mkdirp": "^0.5.1",
     "path-to-regexp": "^2.1.0",
-    "sergeant": "^17.2.1",
+    "sergeant": "^17.2.3",
     "slugg": "^1.2.1",
     "thenify": "^3.2.1"
   },
