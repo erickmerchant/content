@@ -26,7 +26,7 @@
     "glob": "^7.1.1",
     "highlights": "^3.1.1",
     "html-minifier": "^3.5.9",
-    "markdown-it": "^8.4.0",
+    "markdown-it": "^8.4.1",
     "mkdirp": "^0.5.1",
     "path-to-regexp": "^2.1.0",
     "sergeant": "^17.2.3",
