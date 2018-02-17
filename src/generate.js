@@ -12,6 +12,11 @@ const prismjs = require('prismjs')
 const markdown = require('markdown-it')({
   highlight (code, lang) {
     if (!lang || prismjs.languages[lang] == null) {
+      try {
+        const grammar = require('prismjs/components/prism-' + lang)
+
+        return prismjs.highlight(code, grammar)
+      } catch (e) {}
       return escapeHTML(code)
     }
 
