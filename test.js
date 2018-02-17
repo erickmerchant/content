@@ -114,7 +114,7 @@ test('src/generate - functionality', function (t) {
       ],
       [
         'build/posts/bar-post/index.html',
-        '<!doctype html><title>Bar Post</title><h1>/posts/bar-post/</h1><main><h2>Bar Post</h2><pre class="editor editor-colors"><div class=line><span class="source js"><span class="storage type var js"><span>let</span></span><span>&nbsp;bar&nbsp;</span><span class="keyword operator assignment js"><span>=</span></span><span>&nbsp;</span><span class="constant language boolean true js"><span>true</span></span></span></div></pre></main>'
+        '<!doctype html><title>Bar Post</title><h1>/posts/bar-post/</h1><main><h2>Bar Post</h2><pre><code class=language-javascript><span class="token keyword">let</span> bar <span class="token operator">=</span> <span class="token boolean">true</span>\n</code></pre></main>'
       ],
       [
         'build/posts/foo-post/index.html',

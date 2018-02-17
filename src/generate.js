@@ -8,20 +8,14 @@ const fs = require('fs')
 const escapeHTML = require('escape-html')
 const pathTo = require('path-to-regexp')
 const readFile = thenify(fs.readFile)
-const Highlights = require('highlights')
-const highlighter = new Highlights()
+const prismjs = require('prismjs')
 const markdown = require('markdown-it')({
   highlight (code, lang) {
-    if (!lang) {
+    if (!lang || prismjs.languages[lang] == null) {
       return escapeHTML(code)
     }
 
-    code = highlighter.highlightSync({
-      fileContents: code.trim(),
-      scopeName: 'source.js'
-    })
-
-    return code
+    return prismjs.highlight(code, prismjs.languages[lang])
   },
   langPrefix: 'language-'
 })
