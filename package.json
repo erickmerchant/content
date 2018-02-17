@@ -1,6 +1,6 @@
 {
   "name": "@erickmerchant/html",
-  "version": "9.0.1",
+  "version": "9.0.2",
   "description": "",
   "bin": {
     "html": "./cli.js"
