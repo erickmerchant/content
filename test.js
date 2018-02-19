@@ -93,43 +93,43 @@ test('src/generate - functionality', function (t) {
     },
     out
   })(noopDefiners)(args)
-  .then(function () {
-    t.deepEqual(directories, [
-      'build',
-      'build/posts/qux-post',
-      'build/posts/bar-post',
-      'build/posts/foo-post',
-      'build/posts',
-      'build'
-    ])
+    .then(function () {
+      t.deepEqual(directories, [
+        'build',
+        'build/posts/qux-post',
+        'build/posts/bar-post',
+        'build/posts/foo-post',
+        'build/posts',
+        'build'
+      ])
 
-    t.deepEqual(writes, [
-      [
-        'build/index.html',
-        '<!doctype html><title>Qux Post</title><h1>/</h1><main><h2>Qux Post</h2></main>'
-      ],
-      [
-        'build/posts/qux-post/index.html',
-        '<!doctype html><title>Qux Post</title><h1>/posts/qux-post/</h1><main><h2>Qux Post</h2></main>'
-      ],
-      [
-        'build/posts/bar-post/index.html',
-        '<!doctype html><title>Bar Post</title><h1>/posts/bar-post/</h1><main><h2>Bar Post</h2><pre><code class=language-javascript><span class="token keyword">let</span> bar <span class="token operator">=</span> <span class="token boolean">true</span>\n</code></pre></main>'
-      ],
-      [
-        'build/posts/foo-post/index.html',
-        '<!doctype html><title>Foo Post</title><h1>/posts/foo-post/</h1><main><h2>Foo Post</h2><pre><code> // foo\n</code></pre></main>'
-      ],
-      [
-        'build/posts/index.html',
-        '<!doctype html><title>Posts</title><h1>/posts/</h1><main><ol><li><a href=/posts/qux-post/ >Qux Post</a><li><a href=/posts/bar-post/ >Bar Post</a><li><a href=/posts/foo-post/ >Foo Post</a></ol></main>'
-      ],
-      [
-        'build/404.html',
-        '<!doctype html><title>Page Not Found</title><h1>/404.html</h1><main><h2>Page Not Found</h2></main>'
-      ]
-    ])
-  })
+      t.deepEqual(writes, [
+        [
+          'build/index.html',
+          '<!doctype html><title>Qux Post</title><h1>/</h1><main><h2>Qux Post</h2></main>'
+        ],
+        [
+          'build/posts/qux-post/index.html',
+          '<!doctype html><title>Qux Post</title><h1>/posts/qux-post/</h1><main><h2>Qux Post</h2></main>'
+        ],
+        [
+          'build/posts/bar-post/index.html',
+          '<!doctype html><title>Bar Post</title><h1>/posts/bar-post/</h1><main><h2>Bar Post</h2><pre><code class=language-javascript><span class="token keyword">let</span> bar <span class="token operator">=</span> <span class="token boolean">true</span>\n</code></pre></main>'
+        ],
+        [
+          'build/posts/foo-post/index.html',
+          '<!doctype html><title>Foo Post</title><h1>/posts/foo-post/</h1><main><h2>Foo Post</h2><pre><code> // foo\n</code></pre></main>'
+        ],
+        [
+          'build/posts/index.html',
+          '<!doctype html><title>Posts</title><h1>/posts/</h1><main><ol><li><a href=/posts/qux-post/ >Qux Post</a><li><a href=/posts/bar-post/ >Bar Post</a><li><a href=/posts/foo-post/ >Foo Post</a></ol></main>'
+        ],
+        [
+          'build/404.html',
+          '<!doctype html><title>Page Not Found</title><h1>/404.html</h1><main><h2>Page Not Found</h2></main>'
+        ]
+      ])
+    })
 })
 
 test('src/make - options and parameters', function (t) {
@@ -186,9 +186,9 @@ test('src/make - no date', function (t) {
     },
     out
   })(noopDefiners)(args)
-  .then(function () {
-    t.ok(1)
-  })
+    .then(function () {
+      t.ok(1)
+    })
 })
 
 test('src/make - date', function (t) {
@@ -215,9 +215,9 @@ test('src/make - date', function (t) {
     },
     out
   })(noopDefiners)(args)
-  .then(function () {
-    t.ok(1)
-  })
+    .then(function () {
+      t.ok(1)
+    })
 })
 
 test('src/move - options and parameters', function (t) {
@@ -287,9 +287,9 @@ test('src/move - no date', function (t) {
     },
     out
   })(noopDefiners)(args)
-  .then(function () {
-    t.ok(1)
-  })
+    .then(function () {
+      t.ok(1)
+    })
 })
 
 test('src/move - title', function (t) {
@@ -324,9 +324,9 @@ test('src/move - title', function (t) {
     },
     out
   })(noopDefiners)(args)
-  .then(function () {
-    t.ok(1)
-  })
+    .then(function () {
+      t.ok(1)
+    })
 })
 
 test('src/move - update', function (t) {
@@ -365,9 +365,9 @@ test('src/move - update', function (t) {
     },
     out
   })(noopDefiners)(args)
-  .then(function () {
-    t.ok(1)
-  })
+    .then(function () {
+      t.ok(1)
+    })
 })
 
 test('cli', async function (t) {

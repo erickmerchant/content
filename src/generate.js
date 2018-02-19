@@ -93,136 +93,136 @@ module.exports = function (deps) {
             })
           }))
         })
-        .then(function (content) {
-          delete require.cache[templatePath]
+          .then(function (content) {
+            delete require.cache[templatePath]
 
-          const template = require(templatePath)
+            const template = require(templatePath)
 
-          const guarded = new Map()
+            const guarded = new Map()
 
-          const routeDefinitions = new Map()
+            const routeDefinitions = new Map()
 
-          const currentPage = Symbol('route')
+            const currentPage = Symbol('route')
 
-          const htmls = new Map()
+            const htmls = new Map()
 
-          const pages = new Set()
+            const pages = new Set()
 
-          const symbol = template({content, route, html, safe, link})
+            const symbol = template({content, route, html, safe, link})
 
-          return Promise.all([...pages].map(function (page) {
-            let file = page.endsWith('/') ? page + 'index.html' : page
+            return Promise.all([...pages].map(function (page) {
+              let file = page.endsWith('/') ? page + 'index.html' : page
 
-            file = path.join(args.destination, file)
+              file = path.join(args.destination, file)
 
-            let content = concat(page, symbol)
+              let content = concat(page, symbol)
 
-            if (!args.noMin) {
-              content = minify(content, {
-                collapseWhitespace: true,
-                removeComments: true,
-                collapseBooleanAttributes: true,
-                removeAttributeQuotes: true,
-                removeRedundantAttributes: true,
-                removeEmptyAttributes: true,
-                removeOptionalTags: true
+              if (!args.noMin) {
+                content = minify(content, {
+                  collapseWhitespace: true,
+                  removeComments: true,
+                  collapseBooleanAttributes: true,
+                  removeAttributeQuotes: true,
+                  removeRedundantAttributes: true,
+                  removeEmptyAttributes: true,
+                  removeOptionalTags: true
+                })
+              }
+
+              return deps.makeDir(path.dirname(file)).then(function () {
+                return deps.writeFile(file, content).then(function () {
+                  deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
+                })
               })
+            }))
+
+            function concat (page, symbol) {
+              const fragments = htmls.get(symbol)
+
+              return fragments.map(escape).join('')
+
+              function escape (fragment) {
+                if (fragment === currentPage) {
+                  return page
+                }
+
+                if (routeDefinitions.has(fragment) || htmls.has(fragment) || guarded.has(fragment)) {
+                  if (guarded.has(fragment)) {
+                    fragment = guarded.get(fragment)
+                  }
+
+                  if (routeDefinitions.has(fragment)) {
+                    let definition = routeDefinitions.get(fragment)
+
+                    fragment = definition.get(page) || ''
+                  }
+
+                  if (htmls.has(fragment)) {
+                    fragment = concat(page, fragment)
+                  }
+
+                  return fragment
+                }
+
+                if (Array.isArray(fragment)) {
+                  return fragment.map(escape).join('')
+                }
+
+                return escapeHTML(fragment)
+              }
             }
 
-            return deps.makeDir(path.dirname(file)).then(function () {
-              return deps.writeFile(file, content).then(function () {
-                deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
+            function route (definer) {
+              if (definer == null) {
+                return currentPage
+              }
+
+              const symbol = Symbol('route')
+              const definition = new Map()
+
+              definer(function (page, content) {
+                pages.add(page)
+
+                definition.set(page, content)
               })
-            })
-          }))
 
-          function concat (page, symbol) {
-            const fragments = htmls.get(symbol)
+              routeDefinitions.set(symbol, definition)
 
-            return fragments.map(escape).join('')
-
-            function escape (fragment) {
-              if (fragment === currentPage) {
-                return page
-              }
-
-              if (routeDefinitions.has(fragment) || htmls.has(fragment) || guarded.has(fragment)) {
-                if (guarded.has(fragment)) {
-                  fragment = guarded.get(fragment)
-                }
-
-                if (routeDefinitions.has(fragment)) {
-                  let definition = routeDefinitions.get(fragment)
-
-                  fragment = definition.get(page) || ''
-                }
-
-                if (htmls.has(fragment)) {
-                  fragment = concat(page, fragment)
-                }
-
-                return fragment
-              }
-
-              if (Array.isArray(fragment)) {
-                return fragment.map(escape).join('')
-              }
-
-              return escapeHTML(fragment)
-            }
-          }
-
-          function route (definer) {
-            if (definer == null) {
-              return currentPage
+              return symbol
             }
 
-            const symbol = Symbol('route')
-            const definition = new Map()
+            function html (strings, ...vals) {
+              const result = []
 
-            definer(function (page, content) {
-              pages.add(page)
+              strings.forEach(function (str, key) {
+                result.push(safe(str))
 
-              definition.set(page, content)
-            })
+                if (vals[key]) {
+                  let val = vals[key]
 
-            routeDefinitions.set(symbol, definition)
+                  result.push(val)
+                }
+              })
 
-            return symbol
-          }
+              let symbol = Symbol('html')
 
-          function html (strings, ...vals) {
-            const result = []
+              htmls.set(symbol, result)
 
-            strings.forEach(function (str, key) {
-              result.push(safe(str))
+              return symbol
+            }
 
-              if (vals[key]) {
-                let val = vals[key]
+            function safe (val) {
+              const symbol = Symbol('safe')
 
-                result.push(val)
-              }
-            })
+              guarded.set(symbol, val)
 
-            let symbol = Symbol('html')
+              return symbol
+            }
 
-            htmls.set(symbol, result)
-
-            return symbol
-          }
-
-          function safe (val) {
-            const symbol = Symbol('safe')
-
-            guarded.set(symbol, val)
-
-            return symbol
-          }
-
-          function link (route, object) {
-            return pathTo.compile(route)(object)
-          }
-        })
+            function link (route, object) {
+              return pathTo.compile(route)(object)
+            }
+          })
       })
     }
   }
