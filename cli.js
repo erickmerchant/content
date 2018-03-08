@@ -2,7 +2,7 @@
 const command = require('sergeant')
 const make = require('./src/make')
 const move = require('./src/move')
-const generate = require('./src/generate')
+const output = require('./src/output')
 const watch = require('@erickmerchant/conditional-watch')
 const thenify = require('thenify')
 const fs = require('fs')
@@ -17,10 +17,10 @@ const deps = {
   out: process.stdout
 }
 
-command('html', 'generate html from markdown and js', function ({parameter, option, command}) {
+command('content', '', function ({command}) {
   command('make', 'make a new markdown file', make(deps))
 
   command('move', 'move a markdown file', move(deps))
 
-  return generate(deps)({parameter, option})
+  command('output', 'output all your content as json', output(deps))
 })(process.argv.slice(2))

@@ -2,7 +2,7 @@ const assert = require('assert')
 const chalk = require('chalk')
 const path = require('path')
 const slugify = require('slugg')
-const cson = require('./cson')
+const withCson = require('./with-cson')
 
 module.exports = function (deps) {
   assert.equal(typeof deps.makeDir, 'function')
@@ -38,7 +38,7 @@ module.exports = function (deps) {
       const file = path.join(args.destination, `${args.date ? Date.now() + '.' : ''}${slug}.md`)
 
       return deps.makeDir(path.dirname(file)).then(function () {
-        return deps.writeFile(file, cson.stringify(object)).then(function () {
+        return deps.writeFile(file, withCson.stringify(object)).then(function () {
           deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
         })
       })

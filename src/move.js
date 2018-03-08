@@ -6,7 +6,7 @@ const fs = require('fs')
 const slugify = require('slugg')
 const pathTo = require('path-to-regexp')
 const readFile = thenify(fs.readFile)
-const cson = require('./cson')
+const withCson = require('./with-cson')
 
 module.exports = function (deps) {
   assert.equal(typeof deps.makeDir, 'function')
@@ -60,7 +60,7 @@ module.exports = function (deps) {
       }
 
       return readFile(args.source, 'utf-8').then(function (string) {
-        const object = cson.parse(string)
+        const object = withCson.parse(string)
 
         if (args.update) {
           now = Date.now()
@@ -76,7 +76,7 @@ module.exports = function (deps) {
 
         return deps.makeDir(path.dirname(file)).then(function () {
           return deps.rename(args.source, file).then(function () {
-            return deps.writeFile(file, cson.stringify(object)).then(function () {
+            return deps.writeFile(file, withCson.stringify(object)).then(function () {
               deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
             })
           })

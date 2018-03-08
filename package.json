@@ -1,35 +1,30 @@
 {
-  "name": "@erickmerchant/html",
-  "version": "9.0.2",
+  "name": "@erickmerchant/content",
+  "version": "1.0.0",
   "description": "",
   "bin": {
-    "html": "./cli.js"
+    "content": "./cli.js"
   },
   "scripts": {
     "test": "standard && tape 'test.js'"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/erickmerchant/html.git"
+    "url": "git+https://github.com/erickmerchant/content.git"
   },
   "author": "Erick Merchant <erickmerchant@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/erickmerchant/html/issues"
+    "url": "https://github.com/erickmerchant/content/issues"
   },
-  "homepage": "https://github.com/erickmerchant/html#readme",
+  "homepage": "https://github.com/erickmerchant/content#readme",
   "dependencies": {
     "@erickmerchant/conditional-watch": "^2.1.2",
-    "chalk": "^2.3.1",
+    "chalk": "^2.3.2",
     "cson-parser": "^3.0.0",
-    "escape-html": "^1.0.3",
-    "glob": "^7.1.1",
-    "html-minifier": "^3.5.9",
-    "markdown-it": "^8.4.1",
     "mkdirp": "^0.5.1",
     "path-to-regexp": "^2.1.0",
-    "prismjs": "^1.11.0",
-    "sergeant": "^17.2.3",
+    "sergeant": "^17.2.4",
     "slugg": "^1.2.1",
     "thenify": "^3.2.1"
   },
