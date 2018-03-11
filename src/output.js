@@ -1,4 +1,5 @@
 const assert = require('assert')
+const chalk = require('chalk')
 const path = require('path')
 const thenify = require('thenify')
 const glob = thenify(require('glob'))
@@ -67,7 +68,9 @@ module.exports = function (deps) {
               const file = path.join(args.destination, object.slug + '.json')
 
               return deps.makeDir(path.dirname(file)).then(function () {
-                return writeFile(file, json)
+                return writeFile(file, json).then(function () {
+                  deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
+                })
               })
             })
           }))
