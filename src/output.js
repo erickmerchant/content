@@ -70,10 +70,24 @@ module.exports = function (deps) {
               return deps.makeDir(path.dirname(file)).then(function () {
                 return writeFile(file, json).then(function () {
                   deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
+
+                  return {
+                    link: object.slug + '.json',
+                    categories: object.categories,
+                    date: object.date
+                  }
                 })
               })
             })
           }))
+            .then(function (results) {
+              const file = path.join(args.destination, 'index.json')
+              return deps.makeDir(path.dirname(file)).then(function () {
+                return writeFile(file, JSON.stringify(results)).then(function () {
+                  deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
+                })
+              })
+            })
         })
       })
     }
