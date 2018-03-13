@@ -64,7 +64,9 @@ module.exports = function (deps) {
             }
 
             return readFile(file, 'utf-8').then(function (string) {
-              const json = JSON.stringify(Object.assign(withCson.parse(string), object))
+              object = Object.assign(withCson.parse(string), object)
+
+              const json = JSON.stringify(object)
               const file = path.join(args.destination, object.slug + '.json')
 
               return deps.makeDir(path.dirname(file)).then(function () {
