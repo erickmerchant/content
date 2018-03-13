@@ -72,7 +72,7 @@ module.exports = function (deps) {
                   deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
 
                   return {
-                    link: object.slug + '.json',
+                    slug: object.slug,
                     categories: object.categories,
                     date: object.date
                   }
