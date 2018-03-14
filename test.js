@@ -258,6 +258,38 @@ test('src/move - update', function (t) {
     })
 })
 
+test('src/output', function (t) {
+  t.plan(5)
+
+  const args = {
+    content: './fixtures/',
+    destination: './fixtures/'
+  }
+
+  const output = []
+
+  require('./src/output')({
+    date: new Date(0),
+    makeDir (directory) {
+      t.ok(directory, 'fixtures')
+
+      return Promise.resolve(true)
+    },
+    writeFile (file, content) {
+      output.push([file, content])
+
+      return Promise.resolve(true)
+    },
+    watch (conditional, files, cb) {
+      return cb()
+    },
+    out
+  })(noopDefiners)(args)
+    .then(function () {
+      t.deepEqual(output, [ [ 'fixtures/qux-post.json', '{"title":"Qux Post","content":"","date":"1970-01-01T00:00:00.000Z","slug":"qux-post","categories":["a-category"]}' ], [ 'fixtures/bar-post.json', '{"title":"Bar Post","content":"``` javascript\\nlet bar = true\\n```","date":"2018-01-04T05:53:26.997Z","slug":"bar-post","categories":["a-category"]}' ], [ 'fixtures/foo-post.json', '{"title":"Foo Post","content":"```\\n // foo\\n```","date":"2018-01-04T05:53:19.828Z","slug":"foo-post","categories":["a-category"]}' ], [ 'fixtures/index.json', '[{"title":"Qux Post","slug":"qux-post","categories":["a-category"],"date":"1970-01-01T00:00:00.000Z"},{"title":"Bar Post","slug":"bar-post","categories":["a-category"],"date":"2018-01-04T05:53:26.997Z"},{"title":"Foo Post","slug":"foo-post","categories":["a-category"],"date":"2018-01-04T05:53:19.828Z"}]' ] ])
+    })
+})
+
 test('cli', async function (t) {
   t.plan(4)
 

@@ -10,6 +10,7 @@ const mkdirp = thenify(require('mkdirp'))
 const writeFile = thenify(fs.writeFile)
 const rename = thenify(fs.rename)
 const deps = {
+  date: new Date(),
   watch,
   makeDir: mkdirp,
   writeFile,

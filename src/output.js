@@ -6,10 +6,13 @@ const glob = thenify(require('glob'))
 const fs = require('fs')
 const pathTo = require('path-to-regexp')
 const readFile = thenify(fs.readFile)
-const writeFile = thenify(fs.writeFile)
 const withCson = require('./with-cson')
 
 module.exports = function (deps) {
+  assert.equal(typeof deps.date, 'object')
+
+  assert.ok(deps.date instanceof Date)
+
   assert.equal(typeof deps.watch, 'function')
 
   assert.equal(typeof deps.makeDir, 'function')
@@ -52,7 +55,7 @@ module.exports = function (deps) {
 
               object.slug = pathResult[2]
             } else {
-              object.date = new Date()
+              object.date = deps.date
 
               object.slug = path.basename(file, '.md')
             }
@@ -70,7 +73,7 @@ module.exports = function (deps) {
               const file = path.join(args.destination, object.slug + '.json')
 
               return deps.makeDir(path.dirname(file)).then(function () {
-                return writeFile(file, json).then(function () {
+                return deps.writeFile(file, json).then(function () {
                   deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
 
                   return {
@@ -86,7 +89,7 @@ module.exports = function (deps) {
             .then(function (results) {
               const file = path.join(args.destination, 'index.json')
               return deps.makeDir(path.dirname(file)).then(function () {
-                return writeFile(file, JSON.stringify(results)).then(function () {
+                return deps.writeFile(file, JSON.stringify(results)).then(function () {
                   deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
                 })
               })
