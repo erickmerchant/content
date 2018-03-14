@@ -1,6 +1,6 @@
 {
   "name": "@erickmerchant/content",
-  "version": "11.0.2",
+  "version": "11.0.3",
   "description": "",
   "bin": {
     "content": "./cli.js"
