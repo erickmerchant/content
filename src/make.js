@@ -30,12 +30,19 @@ module.exports = function (deps) {
       default: { value: false }
     })
 
+    option('ext', {
+      description: 'the extension to use',
+      default: {
+        value: 'md'
+      }
+    })
+
     return function (args) {
       const slug = slugify(args.title)
 
       const object = {title: args.title}
 
-      const file = path.join(args.destination, `${args.date ? Date.now() + '.' : ''}${slug}.md`)
+      const file = path.join(args.destination, `${args.date ? Date.now() + '.' : ''}${slug}.${args.ext}`)
 
       return deps.makeDir(path.dirname(file)).then(function () {
         return deps.writeFile(file, withCson.stringify(object)).then(function () {

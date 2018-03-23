@@ -44,8 +44,16 @@ module.exports = function (deps) {
       default: { value: false }
     })
 
+    option('ext', {
+      description: 'the extension to use',
+      default: {
+        text: 'extension of <source>',
+        value: false
+      }
+    })
+
     return function (args) {
-      const pathResult = pathTo(':time(\\d+).:slug.md').exec(path.basename(args.source))
+      const pathResult = pathTo(`:time(\\d+).:slug${path.extname(args.source)}`).exec(path.basename(args.source))
       let now
       let slug
 
@@ -56,7 +64,7 @@ module.exports = function (deps) {
       } else {
         now = Date.now()
 
-        slug = path.basename(args.source, '.md')
+        slug = path.basename(args.source, (args.ext ? '.' + args.ext : path.extname(args.source)))
       }
 
       return readFile(args.source, 'utf-8').then(function (string) {
@@ -72,7 +80,7 @@ module.exports = function (deps) {
           object.title = args.title
         }
 
-        const file = path.join(args.destination, `${!now || args.noDate ? '' : now + '.'}${slug}.md`)
+        const file = path.join(args.destination, `${!now || args.noDate ? '' : now + '.'}${slug}${args.ext ? '.' + args.ext : path.extname(args.source)}`)
 
         return deps.makeDir(path.dirname(file)).then(function () {
           return deps.rename(args.source, file).then(function () {

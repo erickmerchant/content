@@ -55,7 +55,8 @@ test('src/make - no date', function (t) {
 
   const args = {
     destination: './fixtures/',
-    title: 'Testing'
+    title: 'Testing',
+    ext: 'md'
   }
   const _file = path.join(args.destination, 'testing.md')
 
@@ -85,7 +86,8 @@ test('src/make - date', function (t) {
   const args = {
     destination: './fixtures/',
     title: 'Testing',
-    date: true
+    date: true,
+    ext: 'md'
   }
 
   require('./src/make')({

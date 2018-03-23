@@ -5,8 +5,9 @@ const thenify = require('thenify')
 const glob = thenify(require('glob'))
 const fs = require('fs')
 const pathTo = require('path-to-regexp')
-const readFile = thenify(fs.readFile)
+const extensions = require('markdown-extensions').join(',')
 const withCson = require('./with-cson')
+const readFile = thenify(fs.readFile)
 
 module.exports = function (deps) {
   assert.equal(typeof deps.date, 'object')
@@ -43,11 +44,11 @@ module.exports = function (deps) {
 
     return function (args) {
       return deps.watch(args.watch, [args.content], function () {
-        return glob(path.join(args.content, '**/*.md')).then(function (files) {
+        return glob(path.join(args.content, '**/*.{' + extensions + '}')).then(function (files) {
           files = files.reverse()
 
           return Promise.all(files.map(function (file) {
-            const pathResult = pathTo(':time(\\d+).:slug.md').exec(path.basename(file))
+            const pathResult = pathTo(`:time(\\d+).:slug${path.extname(file)}`).exec(path.basename(file))
             let object = {}
 
             if (pathResult) {
@@ -57,7 +58,7 @@ module.exports = function (deps) {
             } else {
               object.date = deps.date
 
-              object.slug = path.basename(file, '.md')
+              object.slug = path.basename(file, path.extname(file))
             }
 
             object.categories = path.dirname(path.relative(args.content, file)).split('/')
