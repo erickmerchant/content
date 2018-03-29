@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/erickmerchant/content#readme",
   "dependencies": {
-    "@erickmerchant/conditional-watch": "^2.1.2",
+    "@erickmerchant/conditional-watch": "^2.1.3",
     "chalk": "^2.3.2",
     "cson-parser": "^3.0.0",
     "markdown-extensions": "^1.1.1",
