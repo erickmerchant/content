@@ -34,22 +34,20 @@ module.exports = function (deps) {
 
     option('update', {
       description: 'update the time',
-      type: Boolean,
-      default: { value: false }
+      default: false
     })
 
     option('no-date', {
       description: 'do not include the time',
-      type: Boolean,
-      default: { value: false }
+      default: false
     })
 
     option('ext', {
       description: 'the extension to use',
-      default: {
-        text: 'extension of <source>',
-        value: false
-      }
+      type: function ext (val) {
+        return val
+      },
+      default: false
     })
 
     return function (args) {

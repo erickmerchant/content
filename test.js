@@ -21,7 +21,7 @@ const noopDefiners = {
 }
 
 test('src/make - options and parameters', function (t) {
-  t.plan(7)
+  t.plan(6)
 
   const parameters = {}
   const options = {}
@@ -45,9 +45,7 @@ test('src/make - options and parameters', function (t) {
 
   t.ok(options.date)
 
-  t.equal(options.date.type, Boolean)
-
-  t.equal(options.date.default.value, false)
+  t.equal(options.date.default, false)
 })
 
 test('src/make - no date', function (t) {
@@ -111,7 +109,7 @@ test('src/make - date', function (t) {
 })
 
 test('src/move - options and parameters', function (t) {
-  t.plan(10)
+  t.plan(8)
 
   const parameters = {}
   const options = {}
@@ -135,15 +133,11 @@ test('src/move - options and parameters', function (t) {
 
   t.ok(options.update)
 
-  t.equal(options.update.type, Boolean)
-
-  t.equal(options.update.default.value, false)
+  t.equal(options.update.default, false)
 
   t.ok(options['no-date'])
 
-  t.equal(options['no-date'].type, Boolean)
-
-  t.equal(options['no-date'].default.value, false)
+  t.equal(options['no-date'].default, false)
 })
 
 test('src/move - no date', function (t) {

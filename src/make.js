@@ -26,15 +26,15 @@ module.exports = function (deps) {
 
     option('date', {
       description: 'add the current time',
-      type: Boolean,
-      default: { value: false }
+      default: false
     })
 
     option('ext', {
       description: 'the extension to use',
-      default: {
-        value: 'md'
-      }
+      type: function ext (val) {
+        return val
+      },
+      default: 'md'
     })
 
     return function (args) {
