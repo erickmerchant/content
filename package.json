@@ -25,7 +25,7 @@
     "markdown-extensions": "^1.1.1",
     "mkdirp": "^0.5.1",
     "path-to-regexp": "^2.1.0",
-    "sergeant": "^18.0.2",
+    "sergeant": "^19.0.0",
     "slugg": "^1.2.1",
     "thenify": "^3.2.1"
   },

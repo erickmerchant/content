@@ -33,21 +33,18 @@ module.exports = function (deps) {
     })
 
     option('update', {
-      description: 'update the time',
-      default: false
+      description: 'update the time'
     })
 
     option('no-date', {
-      description: 'do not include the time',
-      default: false
+      description: 'do not include the time'
     })
 
     option('ext', {
       description: 'the extension to use',
       type: function ext (val) {
         return val
-      },
-      default: false
+      }
     })
 
     return function (args) {
