@@ -69,13 +69,14 @@ module.exports = function (deps) {
               object = Object.assign(withCson.parse(string), object)
 
               const json = JSON.stringify(object)
-              const file = path.join(args.destination, object.slug + '.json')
+              const file = path.join(args.destination, object.categories.join('/'), object.slug + '.json')
 
               return deps.makeDir(path.dirname(file)).then(function () {
                 return deps.writeFile(file, json).then(function () {
                   deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
 
                   return {
+                    link: path.relative(args.destination, file),
                     title: object.title,
                     slug: object.slug,
                     categories: object.categories,

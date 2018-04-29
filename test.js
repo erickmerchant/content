@@ -277,10 +277,10 @@ test('src/output', function (t) {
   })(noopDefiners)(args)
     .then(function () {
       t.deepEqual(output.sort((a, b) => a[0].localeCompare(b[0])), [
-        [ 'fixtures/bar-post.json', '{"title":"Bar Post","content":"``` javascript\\nlet bar = true\\n```","date":"2018-01-04T05:53:26.997Z","slug":"bar-post","categories":["a-category"]}' ],
-        [ 'fixtures/foo-post.json', '{"title":"Foo Post","content":"```\\n // foo\\n```","date":"2018-01-04T05:53:19.828Z","slug":"foo-post","categories":["a-category"]}' ],
-        [ 'fixtures/index.json', '[{"title":"Qux Post","slug":"qux-post","categories":["a-category"],"date":"1970-01-01T00:00:00.000Z"},{"title":"Bar Post","slug":"bar-post","categories":["a-category"],"date":"2018-01-04T05:53:26.997Z"},{"title":"Foo Post","slug":"foo-post","categories":["a-category"],"date":"2018-01-04T05:53:19.828Z"}]' ],
-        [ 'fixtures/qux-post.json', '{"title":"Qux Post","content":"","date":"1970-01-01T00:00:00.000Z","slug":"qux-post","categories":["a-category"]}' ]
+        [ 'fixtures/a-category/bar-post.json', '{"title":"Bar Post","content":"``` javascript\\nlet bar = true\\n```","date":"2018-01-04T05:53:26.997Z","slug":"bar-post","categories":["a-category"]}' ],
+        [ 'fixtures/a-category/foo-post.json', '{"title":"Foo Post","content":"```\\n // foo\\n```","date":"2018-01-04T05:53:19.828Z","slug":"foo-post","categories":["a-category"]}' ],
+        [ 'fixtures/a-category/qux-post.json', '{"title":"Qux Post","content":"","date":"1970-01-01T00:00:00.000Z","slug":"qux-post","categories":["a-category"]}' ],
+        [ 'fixtures/index.json', '[{"link":"a-category/qux-post.json","title":"Qux Post","slug":"qux-post","categories":["a-category"],"date":"1970-01-01T00:00:00.000Z"},{"link":"a-category/bar-post.json","title":"Bar Post","slug":"bar-post","categories":["a-category"],"date":"2018-01-04T05:53:26.997Z"},{"link":"a-category/foo-post.json","title":"Foo Post","slug":"foo-post","categories":["a-category"],"date":"2018-01-04T05:53:19.828Z"}]' ]
       ])
     })
 })
