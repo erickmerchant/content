@@ -1,13 +1,13 @@
 const assert = require('assert')
 const chalk = require('chalk')
 const path = require('path')
-const thenify = require('thenify')
-const glob = thenify(require('glob'))
+const promisify = require('util').promisify
+const glob = promisify(require('glob'))
 const fs = require('fs')
 const pathTo = require('path-to-regexp')
 const extensions = require('markdown-extensions').join(',')
 const withCson = require('./with-cson')
-const readFile = thenify(fs.readFile)
+const readFile = promisify(fs.readFile)
 
 module.exports = function (deps) {
   assert.equal(typeof deps.date, 'object')

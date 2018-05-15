@@ -21,7 +21,10 @@ module.exports = function (deps) {
 
     option('title', {
       description: 'the title',
-      required: true
+      required: true,
+      type: function title (val) {
+        return val
+      }
     })
 
     option('date', {

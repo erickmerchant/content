@@ -1,7 +1,6 @@
 const test = require('tape')
 const execa = require('execa')
 const path = require('path')
-// const readFile = thenify(require('fs').readFile)
 const stream = require('stream')
 const out = new stream.Writable()
 const withCson = require('./src/with-cson')

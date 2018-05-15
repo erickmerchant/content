@@ -1,11 +1,11 @@
 const assert = require('assert')
 const chalk = require('chalk')
 const path = require('path')
-const thenify = require('thenify')
+const promisify = require('util').promisify
 const fs = require('fs')
 const slugify = require('slugg')
 const pathTo = require('path-to-regexp')
-const readFile = thenify(fs.readFile)
+const readFile = promisify(fs.readFile)
 const withCson = require('./with-cson')
 
 module.exports = function (deps) {
@@ -29,7 +29,10 @@ module.exports = function (deps) {
     })
 
     option('title', {
-      description: 'a new title'
+      description: 'a new title',
+      type: function title (val) {
+        return val
+      }
     })
 
     option('update', {

@@ -4,15 +4,15 @@ const make = require('./src/make')
 const move = require('./src/move')
 const output = require('./src/output')
 const watch = require('@erickmerchant/conditional-watch')
-const thenify = require('thenify')
+const promisify = require('util').promisify
 const fs = require('fs')
-const mkdirp = thenify(require('mkdirp'))
-const writeFile = thenify(fs.writeFile)
-const rename = thenify(fs.rename)
+const makeDir = require('make-dir')
+const writeFile = promisify(fs.writeFile)
+const rename = promisify(fs.rename)
 const deps = {
   date: new Date(),
   watch,
-  makeDir: mkdirp,
+  makeDir,
   writeFile,
   rename,
   out: process.stdout
