@@ -2,7 +2,7 @@ const assert = require('assert')
 const chalk = require('chalk')
 const path = require('path')
 const slugify = require('slugg')
-const withCson = require('./with-cson')
+const cson = require('cson-parser')
 
 module.exports = function (deps) {
   assert.equal(typeof deps.makeDir, 'function')
@@ -31,24 +31,15 @@ module.exports = function (deps) {
       description: 'add the current time'
     })
 
-    option('ext', {
-      description: 'the extension to use',
-      type: function ext (val) {
-        if (val == null) return 'md'
-
-        return val
-      }
-    })
-
     return function (args) {
       const slug = slugify(args.title)
 
       const object = {title: args.title}
 
-      const file = path.join(args.destination, `${args.date ? Date.now() + '.' : ''}${slug}.${args.ext}`)
+      const file = path.join(args.destination, `${args.date ? Date.now() + '.' : ''}${slug}.cson`)
 
       return deps.makeDir(path.dirname(file)).then(function () {
-        return deps.writeFile(file, withCson.stringify(object)).then(function () {
+        return deps.writeFile(file, cson.stringify(object, null, 2)).then(function () {
           deps.out.write(chalk.green('\u2714') + ' saved ' + file + '\n')
         })
       })

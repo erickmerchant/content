@@ -1,6 +1,6 @@
----
 title: 'Bar Post'
----
+content: '''
 ``` javascript
 let bar = true
 ```
+'''

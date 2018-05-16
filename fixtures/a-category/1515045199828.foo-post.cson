@@ -1,6 +1,6 @@
----
 title: 'Foo Post'
----
+content: '''
 ```
  // foo
 ```
+'''

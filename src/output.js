@@ -5,8 +5,7 @@ const promisify = require('util').promisify
 const glob = promisify(require('glob'))
 const fs = require('fs')
 const pathTo = require('path-to-regexp')
-const extensions = require('markdown-extensions').join(',')
-const withCson = require('./with-cson')
+const cson = require('cson-parser')
 const readFile = promisify(fs.readFile)
 
 module.exports = function (deps) {
@@ -26,7 +25,7 @@ module.exports = function (deps) {
 
   return function ({parameter, option}) {
     parameter('content', {
-      description: 'directory containing your markdown',
+      description: 'directory containing your content',
       required: true
     })
 
@@ -42,11 +41,11 @@ module.exports = function (deps) {
 
     return function (args) {
       return deps.watch(args.watch, [args.content], function () {
-        return glob(path.join(args.content, '**/*.{' + extensions + '}')).then(function (files) {
+        return glob(path.join(args.content, '**/*.cson')).then(function (files) {
           files = files.reverse()
 
           return Promise.all(files.map(function (file) {
-            const pathResult = pathTo(`:time(\\d+).:slug${path.extname(file)}`).exec(path.basename(file))
+            const pathResult = pathTo(`:time(\\d+).:slug.cson`).exec(path.basename(file))
             let object = {}
 
             if (pathResult) {
@@ -66,7 +65,7 @@ module.exports = function (deps) {
             }
 
             return readFile(file, 'utf-8').then(function (string) {
-              object = Object.assign(withCson.parse(string), object)
+              object = Object.assign(cson.parse(string), object)
 
               const json = JSON.stringify(object)
               const file = path.join(args.destination, object.categories.join('/'), object.slug + '.json')
