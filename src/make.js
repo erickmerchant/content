@@ -34,7 +34,7 @@ module.exports = function (deps) {
     return function (args) {
       const slug = slugify(args.title)
 
-      const object = {title: args.title}
+      const object = {title: args.title, content: '\n'}
 
       const file = path.join(args.destination, `${args.date ? Date.now() + '.' : ''}${slug}.cson`)
 
