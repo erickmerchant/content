@@ -72,7 +72,7 @@ module.exports = function (deps) {
 
               return deps.makeDir(path.dirname(file)).then(function () {
                 return deps.writeFile(file, json).then(function () {
-                  deps.out.write(`${chalk.gray('[content]')} ${chalk.green('\u2714')} saved ${file}\n`)
+                  deps.out.write(`${chalk.gray('[content output]')} ${chalk.green('\u2714')} saved ${file}\n`)
 
                   return {
                     link: path.relative(args.destination, file),
@@ -89,7 +89,7 @@ module.exports = function (deps) {
               const file = path.join(args.destination, 'index.json')
               return deps.makeDir(path.dirname(file)).then(function () {
                 return deps.writeFile(file, JSON.stringify(results)).then(function () {
-                  deps.out.write(`${chalk.gray('[content]')} ${chalk.green('\u2714')} saved ${file}\n`)
+                  deps.out.write(`${chalk.gray('[content output]')} ${chalk.green('\u2714')} saved ${file}\n`)
                 })
               })
             })
