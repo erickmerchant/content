@@ -76,7 +76,7 @@ module.exports = function (deps) {
         return deps.makeDir(path.dirname(file)).then(function () {
           return deps.rename(args.source, file).then(function () {
             return deps.writeFile(file, cson.stringify(object, null, 2)).then(function () {
-              deps.out.write(`${chalk.gray('[content move]')} ${chalk.green('\u2714')} saved ${file}\n`)
+              deps.out.write(`${chalk.gray('[content move]')} saved ${file}\n`)
             })
           })
         })
