@@ -24,7 +24,7 @@
     "cson-parser": "^3.0.0",
     "make-dir": "^1.3.0",
     "path-to-regexp": "^2.1.0",
-    "sergeant": "^19.3.0",
+    "sergeant": "^19.4.0",
     "slugg": "^1.2.1"
   },
   "devDependencies": {
