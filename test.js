@@ -283,7 +283,7 @@ test('src/output', function (t) {
 })
 
 test('cli', async function (t) {
-  t.plan(4)
+  t.plan(3)
 
   try {
     await execa('node', ['./cli.js', '-h'])
@@ -293,7 +293,5 @@ test('cli', async function (t) {
     t.equal(e.stderr.includes('Usage'), true)
 
     t.equal(e.stderr.includes('Options'), true)
-
-    t.equal(e.stderr.includes('Commands'), true)
   }
 })
