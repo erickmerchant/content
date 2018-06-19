@@ -19,9 +19,9 @@ const deps = {
 }
 
 command('content', '', function ({command}) {
-  command('make', 'make a new markdown file', make(deps))
+  command('make', 'make a new cson file', make(deps))
 
-  command('move', 'move a markdown file', move(deps))
+  command('move', 'move a cson file', move(deps))
 
   command('output', 'output all your content as json', output(deps))
 })(process.argv.slice(2))
