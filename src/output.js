@@ -23,78 +23,61 @@ module.exports = function (deps) {
 
   assert.equal(typeof deps.out.write, 'function')
 
-  return function ({parameter, option}) {
-    parameter('content', {
-      description: 'directory containing your content',
-      required: true
-    })
+  return function (args) {
+    return deps.watch(args.watch, [args.content], function () {
+      return glob(path.join(args.content, '**/*.cson')).then(function (files) {
+        files = files.reverse()
 
-    parameter('destination', {
-      description: 'the directory to save to',
-      required: true
-    })
+        return Promise.all(files.map(function (file) {
+          const pathResult = pathTo(`:time(\\d+).:slug.cson`).exec(path.basename(file))
+          let object = {}
 
-    option('watch', {
-      description: 'watch for changes',
-      alias: 'w'
-    })
+          if (pathResult) {
+            object.date = new Date(Number(pathResult[1]))
 
-    return function (args) {
-      return deps.watch(args.watch, [args.content], function () {
-        return glob(path.join(args.content, '**/*.cson')).then(function (files) {
-          files = files.reverse()
+            object.slug = pathResult[2]
+          } else {
+            object.date = deps.date
 
-          return Promise.all(files.map(function (file) {
-            const pathResult = pathTo(`:time(\\d+).:slug.cson`).exec(path.basename(file))
-            let object = {}
+            object.slug = path.basename(file, path.extname(file))
+          }
 
-            if (pathResult) {
-              object.date = new Date(Number(pathResult[1]))
+          object.categories = path.dirname(path.relative(args.content, file)).split('/')
 
-              object.slug = pathResult[2]
-            } else {
-              object.date = deps.date
+          if (object.categories.length && object.categories[0] === '.') {
+            object.categories = object.categories.slice(1)
+          }
 
-              object.slug = path.basename(file, path.extname(file))
-            }
+          return readFile(file, 'utf-8').then(function (string) {
+            object = Object.assign(cson.parse(string), object)
 
-            object.categories = path.dirname(path.relative(args.content, file)).split('/')
+            const json = JSON.stringify(object)
+            const file = path.join(args.destination, object.categories.join('/'), object.slug + '.json')
 
-            if (object.categories.length && object.categories[0] === '.') {
-              object.categories = object.categories.slice(1)
-            }
+            return deps.makeDir(path.dirname(file)).then(function () {
+              return deps.writeFile(file, json).then(function () {
+                deps.out.write(`${chalk.gray('[content output]')} saved ${file}\n`)
 
-            return readFile(file, 'utf-8').then(function (string) {
-              object = Object.assign(cson.parse(string), object)
-
-              const json = JSON.stringify(object)
-              const file = path.join(args.destination, object.categories.join('/'), object.slug + '.json')
-
-              return deps.makeDir(path.dirname(file)).then(function () {
-                return deps.writeFile(file, json).then(function () {
-                  deps.out.write(`${chalk.gray('[content output]')} saved ${file}\n`)
-
-                  return {
-                    link: path.relative(args.destination, file),
-                    title: object.title,
-                    slug: object.slug,
-                    categories: object.categories,
-                    date: object.date
-                  }
-                })
+                return {
+                  link: path.relative(args.destination, file),
+                  title: object.title,
+                  slug: object.slug,
+                  categories: object.categories,
+                  date: object.date
+                }
               })
             })
-          }))
-            .then(function (results) {
-              const file = path.join(args.destination, 'index.json')
-              return deps.makeDir(path.dirname(file)).then(function () {
-                return deps.writeFile(file, JSON.stringify(results)).then(function () {
-                  deps.out.write(`${chalk.gray('[content output]')} saved ${file}\n`)
-                })
+          })
+        }))
+          .then(function (results) {
+            const file = path.join(args.destination, 'index.json')
+            return deps.makeDir(path.dirname(file)).then(function () {
+              return deps.writeFile(file, JSON.stringify(results)).then(function () {
+                deps.out.write(`${chalk.gray('[content output]')} saved ${file}\n`)
               })
             })
-        })
+          })
       })
-    }
+    })
   }
 }

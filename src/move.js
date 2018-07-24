@@ -17,70 +17,43 @@ module.exports = function (deps) {
 
   assert.equal(typeof deps.out.write, 'function')
 
-  return function ({parameter, option}) {
-    parameter('source', {
-      description: 'the file to move',
-      required: true
-    })
+  return function (args) {
+    const pathResult = pathTo(`:time(\\d+).:slug.cson`).exec(path.basename(args.source))
+    let now
+    let slug
 
-    parameter('destination', {
-      description: 'the directory to move it to',
-      required: true
-    })
+    if (pathResult) {
+      now = pathResult[1]
 
-    option('title', {
-      description: 'a new title',
-      type: function title (val) {
-        return val
-      }
-    })
+      slug = pathResult[2]
+    } else {
+      now = Date.now()
 
-    option('update', {
-      description: 'update the time'
-    })
+      slug = path.basename(args.source, '.cson')
+    }
 
-    option('no-date', {
-      description: 'do not include the time'
-    })
+    return readFile(args.source, 'utf-8').then(function (string) {
+      const object = cson.parse(string)
 
-    return function (args) {
-      const pathResult = pathTo(`:time(\\d+).:slug.cson`).exec(path.basename(args.source))
-      let now
-      let slug
-
-      if (pathResult) {
-        now = pathResult[1]
-
-        slug = pathResult[2]
-      } else {
+      if (args.update) {
         now = Date.now()
-
-        slug = path.basename(args.source, '.cson')
       }
 
-      return readFile(args.source, 'utf-8').then(function (string) {
-        const object = cson.parse(string)
+      if (args.title != null) {
+        slug = slugify(args.title)
 
-        if (args.update) {
-          now = Date.now()
-        }
+        object.title = args.title
+      }
 
-        if (args.title != null) {
-          slug = slugify(args.title)
+      const file = path.join(args.destination, `${!now || args.noDate ? '' : now + '.'}${slug}.cson`)
 
-          object.title = args.title
-        }
-
-        const file = path.join(args.destination, `${!now || args.noDate ? '' : now + '.'}${slug}.cson`)
-
-        return deps.makeDir(path.dirname(file)).then(function () {
-          return deps.rename(args.source, file).then(function () {
-            return deps.writeFile(file, cson.stringify(object, null, 2)).then(function () {
-              deps.out.write(`${chalk.gray('[content move]')} saved ${file}\n`)
-            })
+      return deps.makeDir(path.dirname(file)).then(function () {
+        return deps.rename(args.source, file).then(function () {
+          return deps.writeFile(file, cson.stringify(object, null, 2)).then(function () {
+            deps.out.write(`${chalk.gray('[content move]')} saved ${file}\n`)
           })
         })
       })
-    }
+    })
   }
 }

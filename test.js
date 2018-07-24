@@ -7,44 +7,6 @@ const cson = require('cson-parser')
 
 out._write = () => {}
 
-const noopDeps = {
-  makeDir () { return Promise.resolve(true) },
-  writeFile () { return Promise.resolve(true) },
-  rename () { return Promise.resolve(true) },
-  watch () {},
-  out
-}
-const noopDefiners = {
-  parameter () {},
-  option () {}
-}
-
-test('src/make - options and parameters', function (t) {
-  t.plan(5)
-
-  const parameters = {}
-  const options = {}
-
-  require('./src/make')(noopDeps)({
-    parameter (name, args) {
-      parameters[name] = args
-    },
-    option (name, args) {
-      options[name] = args
-    }
-  })
-
-  t.ok(parameters.destination)
-
-  t.equal(parameters.destination.required, true)
-
-  t.ok(options.title)
-
-  t.equal(options.title.required, true)
-
-  t.ok(options.date)
-})
-
 test('src/make - no date', function (t) {
   t.plan(4)
 
@@ -68,7 +30,7 @@ test('src/make - no date', function (t) {
       return Promise.resolve(true)
     },
     out
-  })(noopDefiners)(args)
+  })(args)
     .then(function () {
       t.ok(1)
     })
@@ -97,38 +59,10 @@ test('src/make - date', function (t) {
       return Promise.resolve(true)
     },
     out
-  })(noopDefiners)(args)
+  })(args)
     .then(function () {
       t.ok(1)
     })
-})
-
-test('src/move - options and parameters', function (t) {
-  t.plan(6)
-
-  const parameters = {}
-  const options = {}
-
-  require('./src/move')(noopDeps)({
-    parameter (name, args) {
-      parameters[name] = args
-    },
-    option (name, args) {
-      options[name] = args
-    }
-  })
-
-  t.ok(parameters.source)
-
-  t.equal(parameters.source.required, true)
-
-  t.ok(parameters.destination)
-
-  t.equal(parameters.destination.required, true)
-
-  t.ok(options.update)
-
-  t.ok(options['no-date'])
 })
 
 test('src/move - no date', function (t) {
@@ -161,7 +95,7 @@ test('src/move - no date', function (t) {
       return Promise.resolve(true)
     },
     out
-  })(noopDefiners)(args)
+  })(args)
     .then(function () {
       t.ok(1)
     })
@@ -198,7 +132,7 @@ test('src/move - title', function (t) {
       return Promise.resolve(true)
     },
     out
-  })(noopDefiners)(args)
+  })(args)
     .then(function () {
       t.ok(1)
     })
@@ -239,7 +173,7 @@ test('src/move - update', function (t) {
       return Promise.resolve(true)
     },
     out
-  })(noopDefiners)(args)
+  })(args)
     .then(function () {
       t.ok(1)
     })
@@ -271,7 +205,7 @@ test('src/output', function (t) {
       return cb()
     },
     out
-  })(noopDefiners)(args)
+  })(args)
     .then(function () {
       t.deepEqual(output.sort((a, b) => a[0].localeCompare(b[0])), [
         [ 'fixtures/a-category/bar-post.json', '{"title":"Bar Post","content":"``` javascript\\nlet bar = true\\n```","date":"2018-01-04T05:53:26.997Z","slug":"bar-post","categories":["a-category"]}' ],

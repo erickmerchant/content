@@ -13,36 +13,17 @@ module.exports = function (deps) {
 
   assert.equal(typeof deps.out.write, 'function')
 
-  return function ({parameter, option}) {
-    parameter('destination', {
-      description: 'the directory to save to',
-      required: true
-    })
+  return function (args) {
+    const slug = slugify(args.title)
 
-    option('title', {
-      description: 'the title',
-      required: true,
-      type: function title (val) {
-        return val
-      }
-    })
+    const object = {title: args.title, content: '\n'}
 
-    option('date', {
-      description: 'add the current time'
-    })
+    const file = path.join(args.destination, `${args.date ? Date.now() + '.' : ''}${slug}.cson`)
 
-    return function (args) {
-      const slug = slugify(args.title)
-
-      const object = {title: args.title, content: '\n'}
-
-      const file = path.join(args.destination, `${args.date ? Date.now() + '.' : ''}${slug}.cson`)
-
-      return deps.makeDir(path.dirname(file)).then(function () {
-        return deps.writeFile(file, cson.stringify(object, null, 2)).then(function () {
-          deps.out.write(`${chalk.gray('[content make]')} saved ${file}\n`)
-        })
+    return deps.makeDir(path.dirname(file)).then(function () {
+      return deps.writeFile(file, cson.stringify(object, null, 2)).then(function () {
+        deps.out.write(`${chalk.gray('[content make]')} saved ${file}\n`)
       })
-    }
+    })
   }
 }

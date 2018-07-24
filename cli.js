@@ -19,9 +19,68 @@ const deps = {
 }
 
 command('content', '', function ({command}) {
-  command('make', 'make a new cson file', make(deps))
+  command('make', 'make a new cson file', ({option, parameter}) => {
+    parameter('destination', {
+      description: 'the directory to save to',
+      required: true
+    })
 
-  command('move', 'move a cson file', move(deps))
+    option('title', {
+      description: 'the title',
+      required: true,
+      type (val) { return val }
+    })
 
-  command('output', 'output all your content as json', output(deps))
+    option('date', {
+      description: 'add the current time'
+    })
+
+    return (args) => make(deps)(args)
+  })
+
+  command('move', 'move a cson file', ({option, parameter}) => {
+    parameter('source', {
+      description: 'the file to move',
+      required: true
+    })
+
+    parameter('destination', {
+      description: 'the directory to move it to',
+      required: true
+    })
+
+    option('title', {
+      description: 'a new title',
+      type (val) { return val }
+    })
+
+    option('update', {
+      description: 'update the time'
+    })
+
+    option('no-date', {
+      description: 'do not include the time'
+    })
+
+    return (args) => move(deps)(args)
+  })
+
+  command('output', 'output all your content as json', ({option, parameter}) => {
+    parameter('content', {
+      description: 'directory containing your content',
+      required: true
+    })
+
+    parameter('destination', {
+      description: 'the directory to save to',
+      required: true
+    })
+
+    option('watch', {
+      description: 'watch for changes',
+      alias: 'w'
+    })
+
+    return (args) => output(deps)(args)
+  })
 })(process.argv.slice(2))
