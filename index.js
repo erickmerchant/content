@@ -2,7 +2,7 @@ const path = require('path')
 const pathTo = require('path-to-regexp')
 const cson = require('cson-parser')
 
-module.exports = function (file, content) {
+module.exports = function (file, content = '', now = new Date()) {
   const result = {}
 
   result.data = cson.parse(content)
@@ -14,7 +14,7 @@ module.exports = function (file, content) {
 
     result.slug = pathResult[2]
   } else {
-    result.date = new Date()
+    result.date = now
 
     result.slug = path.basename(file, path.extname(file))
   }

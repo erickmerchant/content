@@ -1,9 +1,10 @@
 const test = require('tape')
 const execa = require('execa')
+const cson = require('cson-parser')
 const path = require('path')
+const fs = require('fs')
 const stream = require('stream')
 const out = new stream.Writable()
-const cson = require('cson-parser')
 
 out._write = () => {}
 
@@ -90,7 +91,7 @@ test('src/move - no date', function (t) {
     writeFile (file, content) {
       t.ok('fixtures/qux-post.cson', file)
 
-      t.equal(content, cson.stringify({title: 'Qux Post', content: '\n'}, null, 2))
+      t.equal(content, cson.stringify({title: 'Qux Post', content: 'qux qux qux'}, null, 2))
 
       return Promise.resolve(true)
     },
@@ -127,7 +128,7 @@ test('src/move - title', function (t) {
     writeFile (file, content) {
       t.ok('fixtures/baz-post.cson', file)
 
-      t.equal(content, cson.stringify({title: 'Baz Post', content: '\n'}, null, 2))
+      t.equal(content, cson.stringify({title: 'Baz Post', content: 'qux qux qux'}, null, 2))
 
       return Promise.resolve(true)
     },
@@ -165,9 +166,7 @@ test('src/move - update', function (t) {
 
       t.equal(content, cson.stringify({
         title: 'Foo Post',
-        content: `\`\`\`
- // foo
-\`\`\``
+        content: 'foo foo foo'
       }, null, 2))
 
       return Promise.resolve(true)
@@ -177,6 +176,44 @@ test('src/move - update', function (t) {
     .then(function () {
       t.ok(1)
     })
+})
+
+test('index - with date', function (t) {
+  t.plan(1)
+
+  const file = './fixtures/a-category/1515045199828.foo-post.cson'
+
+  const expected = require('./index.js')(file, fs.readFileSync(file, 'utf8'))
+
+  t.deepEqual({
+    data: {
+      title: 'Foo Post',
+      content: 'foo foo foo'
+    },
+    date: new Date(1515045199828),
+    slug: 'foo-post',
+    categories: [ 'fixtures', 'a-category' ]
+  }, expected)
+})
+
+test('index - without date', function (t) {
+  t.plan(1)
+
+  const file = 'fixtures/a-category/qux-post.cson'
+
+  const now = new Date()
+
+  const expected = require('./index.js')(file, fs.readFileSync(file, 'utf8'), now)
+
+  t.deepEqual({
+    data: {
+      title: 'Qux Post',
+      content: 'qux qux qux'
+    },
+    date: now,
+    slug: 'qux-post',
+    categories: [ 'fixtures', 'a-category' ]
+  }, expected)
 })
 
 test('cli', async function (t) {
