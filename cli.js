@@ -2,7 +2,6 @@
 const command = require('sergeant')
 const make = require('./src/make')
 const move = require('./src/move')
-const watch = require('@erickmerchant/conditional-watch')
 const promisify = require('util').promisify
 const fs = require('fs')
 const makeDir = require('make-dir')
@@ -10,7 +9,6 @@ const writeFile = promisify(fs.writeFile)
 const rename = promisify(fs.rename)
 const deps = {
   date: new Date(),
-  watch,
   makeDir,
   writeFile,
   rename,
