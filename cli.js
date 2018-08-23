@@ -2,7 +2,6 @@
 const command = require('sergeant')
 const make = require('./src/make')
 const move = require('./src/move')
-const output = require('./src/output')
 const watch = require('@erickmerchant/conditional-watch')
 const promisify = require('util').promisify
 const fs = require('fs')
@@ -63,24 +62,5 @@ command('content', '', function ({command}) {
     })
 
     return (args) => move(deps)(args)
-  })
-
-  command('output', 'output all your content as json', ({option, parameter}) => {
-    parameter('content', {
-      description: 'directory containing your content',
-      required: true
-    })
-
-    parameter('destination', {
-      description: 'the directory to save to',
-      required: true
-    })
-
-    option('watch', {
-      description: 'watch for changes',
-      alias: 'w'
-    })
-
-    return (args) => output(deps)(args)
   })
 })(process.argv.slice(2))
